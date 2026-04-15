@@ -1,0 +1,76 @@
+*Front end* -
+React
+Nextjs
+Tailwind css
+*Back end* -
+Node.js + express/nestjs
+REST + websockets
+*Database* -
+Sqlite - mysql/postgresql etc with orm (eg prisma)
+*Mapping APIs* -
+Google maps api + phone's gps to connect to it and backend to read it
+*Mobile app* -
+We will use the same backend through flutter
+*Authorization* -
+NextAuth, twilio
+*Payment gateway* -
+RazorPay UPI
+*Hosting* -
+Azure/AWS/Render etc etc
+*UX design* -
+Figma (+ notion/airtable + jira - optional)
+*Some other tools* -
+Accountong software eg zoho books, mis stack, git and github etc
+
+
+
+Phase 1 focus: intra‑city + SMEs
+Target use cases: same‑city movements like retail distribution, warehouse–store shuttles, office/home shifting, and local e‑commerce deliveries using mini‑trucks and LCVs.
+
+Value props for SMEs: standardized transparent pricing, ability to compare multiple drivers, tracking, and digital proof of delivery, which are big pain points in traditional intra‑city transport.
+
+Driver side: prioritize owner‑operators of mini‑trucks (Tata Ace, 14‑ft, etc.) that mostly work intra‑city and need higher utilization and reduced empty runs.
+
+Starter pricing model (intra‑city, SME)
+Design pricing to be low‑commitment and transaction‑driven at first.
+
+Shippers (SMEs)
+
+Free tier: limited number of bookings/month, standard support, app/web only.
+
+SME Plan (monthly): unlimited bookings, priority support, saved routes and addresses, GST invoicing, and basic analytics.
+
+Carriers/Drivers
+
+Free: accept jobs offered to you, basic profile and ratings.
+
+Pro: search and bid on loads, preferred shippers, simple dispatch tools, and early payout options.
+
+Most revenue initially comes from a small per‑trip fee or percentage of the trip value (e.g., only on completed jobs), which SMEs are used to as part of per‑km or per‑trip transport costs.
+
+P2P, B2P, B2B in this phased approach
+P2P (individual to driver)
+
+Intra‑city: house shifting, small ad‑hoc loads; very app‑driven and purely pay‑per‑trip with upfront pricing.
+
+B2P (SME to independent drivers)
+
+Your core early segment: shops, warehouses, and D2C brands booking local moves with verified drivers; you monetize via per‑trip fees plus optional SME/driver plans.
+
+B2B (business to fleets/3PLs)
+
+Comes later: once you handle higher volumes and inter‑city lanes, add support for fleets and 3PLs, contract rates, and integrations to ERPs/TMS
+
+PROBLEMS
+
+Driver and UX Constraints
+Feature,Reality/Constraint
+Hardware,Drivers often use low-end Android devices with limited RAM/storage; heavy apps crash frequently.
+Environment,"Sunlight glare, poor network connectivity, and battery drainage make real-time app usage unreliable."
+Authentication,Shared phones and frequent SIM churn lead to poor account hygiene and authentication confusion.
+Literacy,"Elderly or low-literacy drivers struggle with dense interfaces, necessitating multi-language and icon-based UX."
+
+Technical and Data Challenges
+Infrastructure:  GPS inaccuracies and network "black spots" in congested urban areas lead to incorrect ETAs and user frustration.
+Data Hygiene:  Incomplete addresses and colloquial location names undermine the accuracy of routing and analytics.
+Fraud:  The system is vulnerable to GPS spoofing, fake Proof of Delivery (POD) uploads, and collusion between drivers and shippers to manipulate mileage.
