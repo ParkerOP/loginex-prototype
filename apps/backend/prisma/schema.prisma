@@ -1,0 +1,69 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users    User[]
+  vehicles Vehicle[]
+}
+
+model User {
+  id             String        @id @default(uuid())
+  phone          String        @unique
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  role           String        @default("SHIPPER") // SHIPPER, DRIVER, ADMIN
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  shipperProfile ShipperProfile?
+  driverProfile  DriverProfile?
+}
+
+model ShipperProfile {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+  name   String
+  gstin  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DriverProfile {
+  id            String @id @default(uuid())
+  userId        String @unique
+  user          User   @relation(fields: [userId], references: [id])
+  name          String
+  licenseNumber String?
+  trustScore    Float  @default(5.0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  vehicles Vehicle[]
+}
+
+model Vehicle {
+  id              String        @id @default(uuid())
+  registrationNo  String        @unique
+  type            String        // TATA_ACE, 14_FT, etc.
+  organizationId  String?
+  organization    Organization? @relation(fields: [organizationId], references: [id])
+  driverProfileId String?
+  driverProfile   DriverProfile? @relation(fields: [driverProfileId], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}

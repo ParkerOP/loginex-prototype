@@ -1,0 +1,17 @@
+Frontend:
+- Next.js (App Router)
+- React
+- TypeScript
+- Tailwind CSS
+
+Backend:
+- NestJS
+- Prisma ORM
+- SQLite (for local prototype)
+
+Monorepo Setup:
+- Turborepo
+- pnpm
+
+Additional libraries to be configured:
+- NextAuth (frontend) / OTP provider abstraction (backend)
