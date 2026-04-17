@@ -380,6 +380,9 @@ When adding dependencies:
 ---
 
 ## 16) Phase Plan for This Prototype
+
+**Strategic Note:** We are following an **API-First (Backend-First) approach**. The entire backend engine will be built and validated via API contracts before any Frontend (Web/Mobile) work begins. This ensures a stable contract for both the Next.js Shipper web app and the Flutter Driver mobile app.
+
 Phase A - Foundation (COMPLETED)
   - Bootstrapped Turborepo monorepo
   - Initialized Next.js frontend and NestJS backend
@@ -388,17 +391,38 @@ Phase A - Foundation (COMPLETED)
   - Implemented base Auth module and RBAC guard placeholders
 - Core auth, user roles, city-scoped entities, and baseline booking/trip schemas
 
-Phase B - Core Intra-City Marketplace
-- Load posting, driver discovery, deterministic matching, basic booking acceptance
+Phase B - Core Intra-City Marketplace Engine (Backend) (IN PROGRESS)
+  - Implemented: Load posting, driver discovery, deterministic matching, basic booking acceptance.
+  - To do: Advanced filtering/search, location/address normalization models.
 
-Phase C - Trip + Trust Loop
-- Trip state machine, live tracking, POD capture, ratings/trust updates
+Phase C - Trip + Trust Loop (Backend)
+  - Trip state machine (Started, In-Transit, Arrived, Delivered)
+  - Live tracking placeholders (location ping ingestion)
+  - Proof of Delivery (POD) capture logic and metadata storage
+  - Ratings and trust score update logic
+  - Return-load suggestion generation for completed drop-offs
 
-Phase D - Monetization and Ops
-- Per-trip fee capture, free/pro plan gates, basic invoicing artifacts, dispute queue
+Phase D - Monetization and Ops (Backend)
+  - Per-trip fee calculation and capture events
+  - Free/Pro plan gating logic
+  - Basic invoicing artifacts generation logic
+  - Dispute queue data models
 
-Phase E - Hardening
-- Fraud flags, address normalization improvements, observability tuning, performance optimization
+Phase E - Frontend Implementation (Web)
+  - Implement Shipper Next.js Dashboard (Load creation, Tracking, Invoicing)
+  - UI styling using Tailwind CSS based on user guidelines
+  - Integration with Backend APIs
+  
+Phase F - Frontend Implementation (Mobile - Flutter)
+  - Implement Driver Flutter App (Load discovery, Match acceptance, Trip updates, POD upload)
+  - Mobile-specific UX (offline-tolerant actions, low-end device optimization)
+  - Integration with Backend APIs
+
+Phase G - Hardening & MVP Validation
+  - End-to-end integration testing
+  - Fraud flags, observability tuning, performance optimization
+  - Address MVP Acceptance Criteria
+
 
 ---
 
