@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Input } from "@repo/ui/input";
+import { Input } from "@/components/ui/input";
 import { MapPin } from "lucide-react";
 
 interface AddressAutocompleteProps {

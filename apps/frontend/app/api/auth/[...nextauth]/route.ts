@@ -6,19 +6,30 @@ export const authOptions: AuthOptions = {
     CredentialsProvider({
       name: "OTP",
       credentials: {
-        phone: { label: "Phone Number", type: "text", placeholder: "e.g. 9876543210" },
-        otp: { label: "OTP", type: "text", placeholder: "Any 4 digits for prototype" },
+        phone: {
+          label: "Phone Number",
+          type: "text",
+          placeholder: "e.g. 9876543210",
+        },
+        otp: {
+          label: "OTP",
+          type: "text",
+          placeholder: "Any 4 digits for prototype",
+        },
+        role: { label: "Role", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.phone || !credentials?.otp) return null;
 
         // Prototype logic: Accept any 4-digit OTP
         if (credentials.otp.length === 4) {
-          // Return a mock shipper user
+          const role = credentials.role || "SHIPPER";
+
           return {
-            id: "shipper-prototype-id-1",
-            name: "Demo Shipper",
+            id: `${role.toLowerCase()}-prototype-id-1`,
+            name: `Demo ${role.charAt(0).toUpperCase() + role.slice(1).toLowerCase()}`,
             email: `${credentials.phone}@demo.com`,
+            role: role,
           };
         }
         return null;
@@ -29,13 +40,17 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async session({ session, token }) {
       if (session.user && token.sub) {
-        (session.user as { id?: string }).id = token.sub;
+        (session.user as { id?: string; role?: string }).id =
+          token.sub as string;
+        (session.user as { id?: string; role?: string }).role =
+          token.role as string;
       }
       return session;
     },
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
+        token.role = (user as { role?: string }).role;
       }
       return token;
     },
