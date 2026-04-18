@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,8 +12,26 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Package, Truck, Activity, Plus } from "lucide-react";
 import Link from "next/link";
+import { getLoadsForShipper, Load } from "../lib/api/loads";
 
 export default function Home() {
+  const [loads, setLoads] = useState<Load[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Dummy shipper ID for now
+    getLoadsForShipper("dummy-shipper-123")
+      .then((data) => {
+        setLoads(data || []);
+      })
+      .catch((err) => console.error("Failed to fetch loads", err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const activeLoads = loads.filter(l => ["POSTED", "MATCHING", "BOOKED"].includes(l.status)).length;
+  const inTransitLoads = loads.filter(l => l.status === "IN_TRANSIT").length;
+  const completedLoads = loads.filter(l => l.status === "DELIVERED").length;
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -20,7 +41,7 @@ export default function Home() {
             Overview of your shipments and recent activity.
           </p>
         </div>
-        <Link href="/loads/new" passHref><Button render={<Link href="/loads/new" />}>
+        <Link href="/loads/new" passHref><Button>
             <Plus className="mr-2 h-4 w-4" /> Post New Load
           </Button></Link>
       </div>
@@ -32,9 +53,9 @@ export default function Home() {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold">{loading ? "-" : activeLoads}</div>
             <p className="text-xs text-muted-foreground">
-              +2 since last hour
+              Awaiting drivers
             </p>
           </CardContent>
         </Card>
@@ -44,7 +65,7 @@ export default function Home() {
             <Truck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4</div>
+            <div className="text-2xl font-bold">{loading ? "-" : inTransitLoads}</div>
             <p className="text-xs text-muted-foreground">
               Drivers on the road
             </p>
@@ -52,13 +73,13 @@ export default function Home() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed Today</CardTitle>
+            <CardTitle className="text-sm font-medium">Completed</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
+            <div className="text-2xl font-bold">{loading ? "-" : completedLoads}</div>
             <p className="text-xs text-muted-foreground">
-              +14% from yesterday
+              Total delivered
             </p>
           </CardContent>
         </Card>
@@ -73,28 +94,34 @@ export default function Home() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      Warehouse A to Retail Store {i}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Tata Ace • 1.2 Tonnes
-                    </p>
+            {loading ? (
+              <p className="text-sm text-muted-foreground">Loading recent trips...</p>
+            ) : loads.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No loads found. Post your first load!</p>
+            ) : (
+              <div className="space-y-4">
+                {loads.slice(0, 5).map((load) => (
+                  <div key={load.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {load.originCity} to {load.destinationCity}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {load.requiredVehicleType} • {load.weight ? `${load.weight} kg` : 'N/A weight'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <Badge variant={load.status === "IN_TRANSIT" ? "default" : "secondary"}>
+                        {load.status.replace('_', ' ')}
+                      </Badge>
+                      <Link href={`/loads/${load.id}`} passHref>
+                        <Button variant="ghost" size="sm">View</Button>
+                      </Link>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <Badge variant={i === 1 ? "default" : "secondary"}>
-                      {i === 1 ? "In Transit" : "Matching"}
-                    </Badge>
-                    <Button variant="ghost" size="sm" render={<Link href="/loads/new" />}>
-                      <Link href={`/loads/${i}`}>View</Link>
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
         <Card className="col-span-3">

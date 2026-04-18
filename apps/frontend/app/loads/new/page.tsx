@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,8 +8,45 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, MapPin } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createLoad } from "../../../lib/api/loads";
 
 export default function NewLoadPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    pickup: "",
+    dropoff: "",
+    cargo: "",
+    vehicleType: "",
+    weight: "",
+  });
+
+  const handleSubmit = async () => {
+    try {
+      setLoading(true);
+      // Ensure we have a dummy shipper ID for prototype
+      // In a real app this comes from auth context
+      await createLoad({
+        shipperId: "dummy-shipper-123",
+        originAddress: formData.pickup,
+        originCity: formData.pickup.split(",")[0] || "Unknown",
+        destinationAddress: formData.dropoff,
+        destinationCity: formData.dropoff.split(",")[0] || "Unknown",
+        cargoDescription: formData.cargo,
+        requiredVehicleType: formData.vehicleType,
+        weight: formData.weight ? parseInt(formData.weight) : undefined,
+        scheduledTime: new Date().toISOString(), // Mock immediate schedule
+      });
+      router.push("/");
+    } catch (error) {
+      console.error("Failed to post load:", error);
+      alert("Failed to post load. Check console for details.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
@@ -35,14 +73,26 @@ export default function NewLoadPage() {
                 <Label htmlFor="pickup">Pickup Address</Label>
                 <div className="relative">
                   <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input id="pickup" placeholder="Enter pickup location (Google Maps Autocomplete Placeholder)" className="pl-8" />
+                  <Input
+                    id="pickup"
+                    placeholder="Enter pickup location"
+                    className="pl-8"
+                    value={formData.pickup}
+                    onChange={(e) => setFormData({...formData, pickup: e.target.value})}
+                  />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="dropoff">Drop-off Address</Label>
                 <div className="relative">
                   <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input id="dropoff" placeholder="Enter drop-off location (Google Maps Autocomplete Placeholder)" className="pl-8" />
+                  <Input
+                    id="dropoff"
+                    placeholder="Enter drop-off location"
+                    className="pl-8"
+                    value={formData.dropoff}
+                    onChange={(e) => setFormData({...formData, dropoff: e.target.value})}
+                  />
                 </div>
               </div>
             </CardContent>
@@ -56,30 +106,47 @@ export default function NewLoadPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="cargo">Cargo Description</Label>
-                <Input id="cargo" placeholder="e.g., Electronics, Furniture, FMCG" />
+                <Input
+                  id="cargo"
+                  placeholder="e.g., Electronics, Furniture, FMCG"
+                  value={formData.cargo}
+                  onChange={(e) => setFormData({...formData, cargo: e.target.value})}
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="vehicle-type">Vehicle Type</Label>
-                  <Select>
+                  <Select onValueChange={(val) => setFormData({...formData, vehicleType: val as string})}>
                     <SelectTrigger id="vehicle-type">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="tata-ace">Tata Ace (Mini Truck)</SelectItem>
-                      <SelectItem value="pickup">Pickup Truck</SelectItem>
-                      <SelectItem value="14ft">14-ft Truck</SelectItem>
+                      <SelectItem value="TATA_ACE">Tata Ace (Mini Truck)</SelectItem>
+                      <SelectItem value="PICKUP">Pickup Truck</SelectItem>
+                      <SelectItem value="14_FT">14-ft Truck</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="weight">Approx. Weight (kg)</Label>
-                  <Input id="weight" type="number" placeholder="500" />
+                  <Input
+                    id="weight"
+                    type="number"
+                    placeholder="500"
+                    value={formData.weight}
+                    onChange={(e) => setFormData({...formData, weight: e.target.value})}
+                  />
                 </div>
               </div>
             </CardContent>
             <CardFooter>
-              <Button className="w-full">Post Load for Matching</Button>
+              <Button
+                className="w-full"
+                onClick={handleSubmit}
+                disabled={loading || !formData.pickup || !formData.dropoff || !formData.vehicleType}
+              >
+                {loading ? "Posting..." : "Post Load for Matching"}
+              </Button>
             </CardFooter>
           </Card>
         </div>
