@@ -168,13 +168,13 @@ export class TripService {
         },
       });
 
-      // Recalculate driver trust score (simple moving average logic or just re-averaging all ratings)
-      const allRatings = await prisma.rating.findMany({
+      // Recalculate driver trust score using database aggregation for better performance
+      const aggregation = await prisma.rating.aggregate({
         where: { driverId: trip.driverId },
+        _avg: { score: true },
       });
 
-      const totalScore = allRatings.reduce((acc, r) => acc + r.score, 0);
-      const newScore = totalScore / allRatings.length;
+      const newScore = aggregation._avg.score ?? data.score;
 
       await prisma.driverProfile.update({
         where: { id: trip.driverId },

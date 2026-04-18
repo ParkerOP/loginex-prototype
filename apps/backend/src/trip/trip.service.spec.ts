@@ -17,7 +17,7 @@ const mockPrismaService = {
   },
   rating: {
     create: jest.fn(),
-    findMany: jest.fn(),
+    aggregate: jest.fn(),
   },
   driverProfile: {
     update: jest.fn(),
@@ -135,10 +135,9 @@ describe('TripService', () => {
         id: 'rating1',
         score: 4,
       });
-      mockPrismaService.rating.findMany.mockResolvedValue([
-        { score: 5 },
-        { score: 4 },
-      ]);
+      mockPrismaService.rating.aggregate.mockResolvedValue({
+        _avg: { score: 4.5 },
+      });
 
       const result = await service.submitRating({
         tripId: '1',
