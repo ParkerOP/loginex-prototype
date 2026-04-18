@@ -1,17 +1,19 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useState, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@repo/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/select";
 import { ArrowLeft, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createLoad } from "../../../lib/api/loads";
 import { GoogleMap, useJsApiLoader, Autocomplete, DirectionsRenderer } from '@react-google-maps/api';
+import MapWrapper from "../../../components/MapWrapper";
+import AddressAutocomplete from "../../../components/AddressAutocomplete";
 
 const libraries: "places"[] = ["places"];
 const defaultCenter = { lat: 28.6139, lng: 77.2090 }; // New Delhi default
@@ -28,6 +30,19 @@ export default function NewLoadPage() {
     weight: "",
   });
 
+  // Free maps toggle logic
+  const [useFreeMaps, setUseFreeMaps] = useState(false);
+
+  useEffect(() => {
+    // Enable free maps if explicitly requested via env var OR if Google API key is missing
+    const useFreeMapsEnv = process.env.NEXT_PUBLIC_USE_FREE_MAPS === 'true';
+    const hasGoogleKey = !!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+    if (useFreeMapsEnv || !hasGoogleKey) {
+        setUseFreeMaps(true);
+    }
+  }, []);
+
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
@@ -41,18 +56,18 @@ export default function NewLoadPage() {
   const destRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   const calculateRoute = async () => {
+    if (useFreeMaps) return; // Free map routing is handled inside FreeMap component
+
     if (!formData.pickup || !formData.dropoff) return;
 
     // Skip real google API call if key is missing/dummy in prototype
     if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) return;
 
     try {
-      // @ts-expect-error google maps types issues
       const directionsService = new google.maps.DirectionsService();
       const results = await directionsService.route({
         origin: formData.pickup,
         destination: formData.dropoff,
-        // @ts-expect-error google maps types issues
         travelMode: google.maps.TravelMode.DRIVING,
       });
       setDirectionsResponse(results);
@@ -124,59 +139,77 @@ export default function NewLoadPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="pickup">Pickup Address</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground z-10" />
-                  {isLoaded ? (
-                     <Autocomplete
-                        onLoad={(autocomplete) => originRef.current = autocomplete}
-                        onPlaceChanged={handleOriginPlaceChanged}
-                     >
-                       <Input
-                         id="pickup"
-                         placeholder="Search pickup location..."
-                         className="pl-8"
-                         value={formData.pickup}
-                         onChange={(e) => setFormData({...formData, pickup: e.target.value})}
-                         onBlur={calculateRoute}
-                       />
-                     </Autocomplete>
-                  ) : (
-                    <Input
+                {useFreeMaps ? (
+                    <AddressAutocomplete
                       id="pickup"
-                      placeholder="Loading maps..."
-                      className="pl-8"
-                      disabled
+                      placeholder="Search pickup location..."
+                      value={formData.pickup}
+                      onChange={(val: string) => setFormData(prev => ({ ...prev, pickup: val }))}
                     />
-                  )}
-                </div>
+                ) : (
+                    <div className="relative">
+                      <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground z-10" />
+                      {isLoaded ? (
+                         <Autocomplete
+                            onLoad={(autocomplete) => originRef.current = autocomplete}
+                            onPlaceChanged={handleOriginPlaceChanged}
+                         >
+                           <Input
+                             id="pickup"
+                             placeholder="Search pickup location..."
+                             className="pl-8"
+                             value={formData.pickup}
+                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, pickup: e.target.value})}
+                             onBlur={calculateRoute}
+                           />
+                         </Autocomplete>
+                      ) : (
+                        <Input
+                          id="pickup"
+                          placeholder="Loading maps..."
+                          className="pl-8"
+                          disabled
+                        />
+                      )}
+                    </div>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="dropoff">Drop-off Address</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground z-10" />
-                  {isLoaded ? (
-                     <Autocomplete
-                        onLoad={(autocomplete) => destRef.current = autocomplete}
-                        onPlaceChanged={handleDestPlaceChanged}
-                     >
-                       <Input
-                         id="dropoff"
-                         placeholder="Search drop-off location..."
-                         className="pl-8"
-                         value={formData.dropoff}
-                         onChange={(e) => setFormData({...formData, dropoff: e.target.value})}
-                         onBlur={calculateRoute}
-                       />
-                     </Autocomplete>
-                  ) : (
-                    <Input
+                {useFreeMaps ? (
+                    <AddressAutocomplete
                       id="dropoff"
-                      placeholder="Loading maps..."
-                      className="pl-8"
-                      disabled
+                      placeholder="Search drop-off location..."
+                      value={formData.dropoff}
+                      onChange={(val: string) => setFormData(prev => ({ ...prev, dropoff: val }))}
                     />
-                  )}
-                </div>
+                ) : (
+                    <div className="relative">
+                      <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground z-10" />
+                      {isLoaded ? (
+                         <Autocomplete
+                            onLoad={(autocomplete) => destRef.current = autocomplete}
+                            onPlaceChanged={handleDestPlaceChanged}
+                         >
+                           <Input
+                             id="dropoff"
+                             placeholder="Search drop-off location..."
+                             className="pl-8"
+                             value={formData.dropoff}
+                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, dropoff: e.target.value})}
+                             onBlur={calculateRoute}
+                           />
+                         </Autocomplete>
+                      ) : (
+                        <Input
+                          id="dropoff"
+                          placeholder="Loading maps..."
+                          className="pl-8"
+                          disabled
+                        />
+                      )}
+                    </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -193,13 +226,13 @@ export default function NewLoadPage() {
                   id="cargo"
                   placeholder="e.g., Electronics, Furniture, FMCG"
                   value={formData.cargo}
-                  onChange={(e) => setFormData({...formData, cargo: e.target.value})}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, cargo: e.target.value})}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="vehicle-type">Vehicle Type</Label>
-                  <Select onValueChange={(val) => setFormData({...formData, vehicleType: val as string})}>
+                  <Select onValueChange={(val: string) => setFormData({...formData, vehicleType: val})}>
                     <SelectTrigger id="vehicle-type">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
@@ -217,7 +250,7 @@ export default function NewLoadPage() {
                     type="number"
                     placeholder="500"
                     value={formData.weight}
-                    onChange={(e) => setFormData({...formData, weight: e.target.value})}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, weight: e.target.value})}
                   />
                 </div>
               </div>
@@ -235,27 +268,38 @@ export default function NewLoadPage() {
         </div>
 
         <div className="rounded-lg border bg-muted/20 hidden md:flex items-center justify-center h-full min-h-[400px] overflow-hidden relative">
-          {isLoaded ? (
-             <GoogleMap
-               mapContainerStyle={{ width: '100%', height: '100%' }}
-               center={defaultCenter}
-               zoom={10}
-               onLoad={map => setMap(map)}
-             >
-               {directionsResponse && (
-                 <DirectionsRenderer directions={directionsResponse} />
-               )}
-             </GoogleMap>
+          {useFreeMaps ? (
+              <>
+                <MapWrapper pickup={formData.pickup} dropoff={formData.dropoff} />
+                <div className="absolute top-2 left-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded shadow-sm z-10 border border-blue-200">
+                    Using Free Map Alternative (OpenStreetMap)
+                </div>
+              </>
           ) : (
-            <div className="text-center text-muted-foreground p-6">
-              <MapPin className="h-12 w-12 mx-auto mb-4 opacity-50 animate-pulse" />
-              <h3 className="font-medium text-lg">Loading Map...</h3>
-            </div>
-          )}
-          {!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && (
-             <div className="absolute top-2 left-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded shadow-sm z-10 border border-yellow-200">
-               Development Mode: API Key Missing
-             </div>
+              <>
+                  {isLoaded ? (
+                     <GoogleMap
+                       mapContainerStyle={{ width: '100%', height: '100%' }}
+                       center={defaultCenter}
+                       zoom={10}
+                       onLoad={map => setMap(map)}
+                     >
+                       {directionsResponse && (
+                         <DirectionsRenderer directions={directionsResponse} />
+                       )}
+                     </GoogleMap>
+                  ) : (
+                    <div className="text-center text-muted-foreground p-6">
+                      <MapPin className="h-12 w-12 mx-auto mb-4 opacity-50 animate-pulse" />
+                      <h3 className="font-medium text-lg">Loading Map...</h3>
+                    </div>
+                  )}
+                  {!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && (
+                     <div className="absolute top-2 left-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded shadow-sm z-10 border border-yellow-200">
+                       Development Mode: API Key Missing
+                     </div>
+                  )}
+              </>
           )}
         </div>
       </div>
