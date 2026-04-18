@@ -34,24 +34,25 @@ model User {
 }
 
 model ShipperProfile {
-  id     String @id @default(uuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
-  name   String
-  gstin  String?
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  name      String
+  gstin     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  loads  Load[]
+  loads   Load[]
+  ratings Rating[]
 }
 
 model DriverProfile {
-  id            String @id @default(uuid())
-  userId        String @unique
-  user          User   @relation(fields: [userId], references: [id])
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
   name          String
   licenseNumber String?
-  trustScore    Float  @default(5.0)
+  trustScore    Float    @default(5.0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -59,26 +60,27 @@ model DriverProfile {
   matchSuggestions MatchSuggestion[]
   bookings         Booking[]
   trips            Trip[]
+  ratings          Rating[]
 }
 
 model Vehicle {
-  id              String        @id @default(uuid())
-  registrationNo  String        @unique
-  type            String        // TATA_ACE, 14_FT, etc.
+  id              String         @id @default(uuid())
+  registrationNo  String         @unique
+  type            String // TATA_ACE, 14_FT, etc.
   organizationId  String?
-  organization    Organization? @relation(fields: [organizationId], references: [id])
+  organization    Organization?  @relation(fields: [organizationId], references: [id])
   driverProfileId String?
   driverProfile   DriverProfile? @relation(fields: [driverProfileId], references: [id])
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 }
 
 model Load {
-  id                  String   @id @default(uuid())
+  id                  String         @id @default(uuid())
   shipperId           String
   shipper             ShipperProfile @relation(fields: [shipperId], references: [id])
   originAddress       String
-  originCity          String   // For simple matching
+  originCity          String // For simple matching
   destinationAddress  String
   destinationCity     String
   cargoDescription    String
@@ -86,48 +88,83 @@ model Load {
   weight              Float?
   scheduledTime       DateTime
   specialInstructions String?
-  status              String   @default("POSTED") // POSTED, MATCHING, BOOKED, IN_TRANSIT, DELIVERED, CANCELLED
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  status              String         @default("POSTED") // POSTED, MATCHING, BOOKED, IN_TRANSIT, DELIVERED, CANCELLED
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 
-  matchSuggestions    MatchSuggestion[]
-  booking             Booking?
+  matchSuggestions MatchSuggestion[]
+  booking          Booking?
 }
 
 model MatchSuggestion {
-  id        String   @id @default(uuid())
+  id        String        @id @default(uuid())
   loadId    String
-  load      Load     @relation(fields: [loadId], references: [id])
+  load      Load          @relation(fields: [loadId], references: [id])
   driverId  String
   driver    DriverProfile @relation(fields: [driverId], references: [id])
   score     Float
-  status    String   @default("OFFERED") // OFFERED, ACCEPTED, REJECTED, EXPIRED
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status    String        @default("OFFERED") // OFFERED, ACCEPTED, REJECTED, EXPIRED
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   @@unique([loadId, driverId])
 }
 
 model Booking {
-  id        String   @id @default(uuid())
-  loadId    String   @unique
-  load      Load     @relation(fields: [loadId], references: [id])
+  id        String        @id @default(uuid())
+  loadId    String        @unique
+  load      Load          @relation(fields: [loadId], references: [id])
   driverId  String
   driver    DriverProfile @relation(fields: [driverId], references: [id])
-  status    String   @default("CONFIRMED") // CONFIRMED, COMPLETED, CANCELLED
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status    String        @default("CONFIRMED") // CONFIRMED, COMPLETED, CANCELLED
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
-  trip      Trip?
+  trip Trip?
 }
 
 model Trip {
+  id              String           @id @default(uuid())
+  bookingId       String           @unique
+  booking         Booking          @relation(fields: [bookingId], references: [id])
+  driverId        String
+  driver          DriverProfile    @relation(fields: [driverId], references: [id])
+  status          String           @default("STARTED") // STARTED, IN_TRANSIT, ARRIVED, DELIVERED
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  locationPings   LocationPing[]
+  proofOfDelivery ProofOfDelivery?
+  rating          Rating?
+}
+
+model LocationPing {
   id        String   @id @default(uuid())
-  bookingId String   @unique
-  booking   Booking  @relation(fields: [bookingId], references: [id])
-  driverId  String
-  driver    DriverProfile @relation(fields: [driverId], references: [id])
-  status    String   @default("STARTED") // STARTED, IN_TRANSIT, ARRIVED, DELIVERED
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id])
+  latitude  Float
+  longitude Float
+  accuracy  Float?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+}
+
+model ProofOfDelivery {
+  id        String   @id @default(uuid())
+  tripId    String   @unique
+  trip      Trip     @relation(fields: [tripId], references: [id])
+  imageUrl  String
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
+model Rating {
+  id        String         @id @default(uuid())
+  tripId    String         @unique
+  trip      Trip           @relation(fields: [tripId], references: [id])
+  driverId  String
+  driver    DriverProfile  @relation(fields: [driverId], references: [id])
+  shipperId String
+  shipper   ShipperProfile @relation(fields: [shipperId], references: [id])
+  score     Float // e.g., 1 to 5
+  comment   String?
+  createdAt DateTime       @default(now())
 }
