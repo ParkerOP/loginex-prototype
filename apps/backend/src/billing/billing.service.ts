@@ -41,6 +41,7 @@ export class BillingService {
         },
       });
 
+      // TODO: Integrate RazorPay UPI for capturing payments and verifying transaction webhooks
       // 2. Generate Invoice for Shipper
       // Assuming a base rate based on weight/distance for now, simplified to a fixed value
       let tripCost = 500.0;

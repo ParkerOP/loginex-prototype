@@ -6,6 +6,8 @@ export class AuthService {
   constructor(private prisma: PrismaService) {}
 
   async requestOtp(phone: string) {
+    // TODO: Integrate Twilio API for sending actual SMS OTPs
+    // TODO: Setup NextAuth in frontend to communicate with this endpoint securely
     // Placeholder OTP logic
     console.log(`Requesting OTP for phone: ${phone}`);
     return { success: true, message: 'OTP sent successfully' };

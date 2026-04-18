@@ -17,6 +17,8 @@ export class LoadService {
     scheduledTime: string;
     specialInstructions?: string;
   }) {
+    // TODO: Integrate Google Maps Geocoding API for address normalization and lat/lng extraction
+    // TODO: Store accurate coordinates for routing and distance calculations
     // Basic validation
     const shipper = await this.prisma.shipperProfile.findUnique({
       where: { id: data.shipperId },

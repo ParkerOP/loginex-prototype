@@ -54,6 +54,8 @@ export class TripService {
     });
   }
 
+  // TODO: Integrate Google Maps Distance Matrix / Directions API to calculate real-time ETA based on pings
+  // TODO: Implement map-matching to snap noisy GPS pings to roads
   async addLocationPing(data: {
     tripId: string;
     latitude: number;
