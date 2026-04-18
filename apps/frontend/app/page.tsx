@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,23 +12,37 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, Truck, Activity, Plus } from "lucide-react";
+import { Package, Truck, Activity, Plus, LogOut } from "lucide-react";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import { getLoadsForShipper, Load } from "../lib/api/loads";
 
 export default function Home() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [loads, setLoads] = useState<Load[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Dummy shipper ID for now
-    getLoadsForShipper("dummy-shipper-123")
-      .then((data) => {
-        setLoads(data || []);
-      })
-      .catch((err) => console.error("Failed to fetch loads", err))
-      .finally(() => setLoading(false));
-  }, []);
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      getLoadsForShipper(session.user.id)
+        .then((data) => {
+          setLoads(data || []);
+        })
+        .catch((err) => console.error("Failed to fetch loads", err))
+        .finally(() => setLoading(false));
+    }
+  }, [session]);
+
+  if (status === "loading" || status === "unauthenticated") {
+    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  }
 
   const activeLoads = loads.filter(l => ["POSTED", "MATCHING", "BOOKED"].includes(l.status)).length;
   const inTransitLoads = loads.filter(l => l.status === "IN_TRANSIT").length;
@@ -38,12 +54,17 @@ export default function Home() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            Overview of your shipments and recent activity.
+            Welcome back, {session?.user?.name || "Shipper"}
           </p>
         </div>
-        <Link href="/loads/new" passHref><Button>
-            <Plus className="mr-2 h-4 w-4" /> Post New Load
-          </Button></Link>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => signOut()}>
+            <LogOut className="mr-2 h-4 w-4" /> Sign Out
+          </Button>
+          <Link href="/loads/new" passHref><Button>
+              <Plus className="mr-2 h-4 w-4" /> Post New Load
+            </Button></Link>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

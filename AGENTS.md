@@ -409,7 +409,7 @@ Phase D - Monetization and Ops (Backend) (COMPLETED)
   - Basic invoicing artifacts generation logic
   - Dispute queue data models
 
-Phase E - Frontend Implementation (Web) (IN PROGRESS)
+Phase E - Frontend Implementation (Web) (COMPLETED)
   - Implement Shipper Next.js Dashboard (Load creation, Tracking, Invoicing)
   - UI styling using Tailwind CSS based on user guidelines
   - Integration with Backend APIs
@@ -448,7 +448,3 @@ Add only after phase-1 validation:
 Keep all future additions backward-compatible and incremental.
 
 This is to be a working 'prototype', don't do too much.
-
-### TODOs for Phase E:
-- **Google Maps Integration**: Replace the placeholder map route visualization in `apps/frontend/app/loads/new/page.tsx` with a true Google Maps/Mapbox component and implement places autocomplete for addresses.
-- **State Management & Auth**: Establish a global state/context to replace the `dummy-shipper-123` currently hardcoded in components with a truly authenticated user.

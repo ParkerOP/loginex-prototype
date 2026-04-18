@@ -1,90 +1,109 @@
 "use client";
 
 import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Truck } from "lucide-react";
-import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [step, setStep] = useState(1);
   const router = useRouter();
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSendOtp = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSendOtp = () => {
+    if (phone.length < 10) {
+      setError("Please enter a valid phone number");
+      return;
+    }
+    setError("");
     setStep(2);
   };
 
-  const handleVerifyOtp = (e: React.FormEvent) => {
-    e.preventDefault();
-    router.push("/");
+  const handleLogin = async () => {
+    if (otp.length !== 4) {
+      setError("Please enter a 4-digit OTP");
+      return;
+    }
+    setLoading(true);
+    setError("");
+
+    const result = await signIn("credentials", {
+      phone,
+      otp,
+      redirect: false,
+    });
+
+    if (result?.error) {
+      setError("Invalid OTP");
+      setLoading(false);
+    } else {
+      router.push("/");
+    }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3 }}
-        className="w-full max-w-md"
-      >
-        <div className="mb-8 flex flex-col items-center justify-center text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground mb-4">
-            <Truck className="h-6 w-6" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight">LogineX</h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            The intra-city logistics platform for SMEs
-          </p>
-        </div>
+    <div className="flex items-center justify-center min-h-screen bg-muted/30 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Shipper Login</CardTitle>
+          <CardDescription>Sign in to manage your intra-city loads</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {error && (
+            <div className="bg-red-100 text-red-600 p-3 rounded-md text-sm text-center">
+              {error}
+            </div>
+          )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{step === 1 ? "Welcome back" : "Enter Verification Code"}</CardTitle>
-            <CardDescription>
-              {step === 1
-                ? "Enter your phone number to sign in to your account."
-                : "We've sent a 4-digit code to your phone."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {step === 1 ? (
-              <form id="login-form" onSubmit={handleSendOtp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" placeholder="+91 98765 43210" required type="tel" />
-                </div>
-              </form>
-            ) : (
-              <form id="otp-form" onSubmit={handleVerifyOtp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="otp">One-Time Password</Label>
-                  <Input id="otp" placeholder="1234" required type="text" maxLength={4} className="text-center text-2xl tracking-widest h-12" />
-                </div>
-              </form>
-            )}
-          </CardContent>
-          <CardFooter className="flex flex-col gap-2">
-            {step === 1 ? (
-              <Button type="submit" form="login-form" className="w-full">
-                Send OTP
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone Number</Label>
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="e.g. 9876543210"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              disabled={step === 2 || loading}
+            />
+          </div>
+
+          {step === 2 && (
+            <div className="space-y-2 animate-in fade-in zoom-in duration-300">
+              <Label htmlFor="otp">Enter OTP</Label>
+              <Input
+                id="otp"
+                type="text"
+                placeholder="Enter any 4 digits"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                maxLength={4}
+                disabled={loading}
+              />
+              <p className="text-xs text-muted-foreground">For prototype, any 4-digit number works.</p>
+            </div>
+          )}
+        </CardContent>
+        <CardFooter className="flex flex-col gap-2">
+          {step === 1 ? (
+            <Button className="w-full" onClick={handleSendOtp}>Send OTP</Button>
+          ) : (
+            <>
+              <Button className="w-full" onClick={handleLogin} disabled={loading}>
+                {loading ? "Verifying..." : "Verify & Sign In"}
               </Button>
-            ) : (
-              <>
-                <Button type="submit" form="otp-form" className="w-full">
-                  Verify & Sign In
-                </Button>
-                <Button variant="ghost" className="w-full" onClick={() => setStep(1)}>
-                  Back
-                </Button>
-              </>
-            )}
-          </CardFooter>
-        </Card>
-      </motion.div>
+              <Button variant="ghost" className="w-full" onClick={() => setStep(1)} disabled={loading}>
+                Change Phone Number
+              </Button>
+            </>
+          )}
+        </CardFooter>
+      </Card>
     </div>
   );
 }
