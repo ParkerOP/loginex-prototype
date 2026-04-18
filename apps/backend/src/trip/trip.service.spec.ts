@@ -1,3 +1,4 @@
+import { BillingService } from '../billing/billing.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TripService } from './trip.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -35,6 +36,10 @@ describe('TripService', () => {
       providers: [
         TripService,
         { provide: PrismaService, useValue: mockPrismaService },
+        {
+          provide: BillingService,
+          useValue: { handleTripCompletion: jest.fn() },
+        },
       ],
     }).compile();
 
