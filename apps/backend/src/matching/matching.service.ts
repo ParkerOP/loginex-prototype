@@ -9,7 +9,7 @@ export class MatchingService {
     private readonly loadService: LoadService,
   ) {}
 
-  // TODO: Future enhancement: add real geospatial matching
+  // TODO: Future enhancement: add real geospatial matching using PostGIS/MongoDB geospatial queries or Google Maps Distance Matrix API
   async getAvailableMatchesForDriver(driverId: string) {
     const driver = await this.prisma.driverProfile.findUnique({
       where: { id: driverId },
