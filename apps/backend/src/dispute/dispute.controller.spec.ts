@@ -1,0 +1,20 @@
+import { DisputeService } from './dispute.service';
+import { Test, TestingModule } from '@nestjs/testing';
+import { DisputeController } from './dispute.controller';
+
+describe('DisputeController', () => {
+  let controller: DisputeController;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [DisputeController],
+      providers: [{ provide: DisputeService, useValue: {} }],
+    }).compile();
+
+    controller = module.get<DisputeController>(DisputeController);
+  });
+
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+});

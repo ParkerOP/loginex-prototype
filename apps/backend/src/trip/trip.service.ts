@@ -1,3 +1,4 @@
+import { BillingService } from '../billing/billing.service';
 import {
   Injectable,
   NotFoundException,
@@ -14,7 +15,10 @@ const VALID_TRANSITIONS = {
 
 @Injectable()
 export class TripService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly billingService: BillingService,
+  ) {}
 
   async updateTripStatus(data: {
     tripId: string;
@@ -116,6 +120,8 @@ export class TripService {
         where: { id: data.tripId },
         data: { status: 'DELIVERED' },
       });
+      // Handle Phase D billing and invoice generation
+      await this.billingService.handleTripCompletion(data.tripId);
     }
 
     return pod;

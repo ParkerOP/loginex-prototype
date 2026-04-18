@@ -257,6 +257,7 @@ Mandatory UX implementation requirements:
 - Multi-language-ready content model (at least architecture-ready in prototype).
 - Offline-tolerant actions for key steps (draft booking updates, queued location/POD submissions).
 - Explicit sync status on all critical actions.
+- Introduce slightly different UI depending on driver/shipper role chosen at profile creation (e.g. Free/Pro plan features vs Standard/SME).
 
 ---
 
@@ -391,18 +392,18 @@ Phase A - Foundation (COMPLETED)
   - Implemented base Auth module and RBAC guard placeholders
 - Core auth, user roles, city-scoped entities, and baseline booking/trip schemas
 
-Phase B - Core Intra-City Marketplace Engine (Backend) (IN PROGRESS)
+Phase B - Core Intra-City Marketplace Engine (Backend) (COMPLETED)
   - Implemented: Load posting, driver discovery, deterministic matching, basic booking acceptance.
   - To do: Advanced filtering/search, location/address normalization models.
 
-Phase C - Trip + Trust Loop (Backend)
+Phase C - Trip + Trust Loop (Backend) (COMPLETED)
   - Trip state machine (Started, In-Transit, Arrived, Delivered)
   - Live tracking placeholders (location ping ingestion)
   - Proof of Delivery (POD) capture logic and metadata storage
   - Ratings and trust score update logic
   - Return-load suggestion generation for completed drop-offs
 
-Phase D - Monetization and Ops (Backend)
+Phase D - Monetization and Ops (Backend) (IN PROGRESS)
   - Per-trip fee calculation and capture events
   - Free/Pro plan gating logic
   - Basic invoicing artifacts generation logic

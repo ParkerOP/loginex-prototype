@@ -31,6 +31,7 @@ model User {
 
   shipperProfile ShipperProfile?
   driverProfile  DriverProfile?
+  disputes       Dispute[]
 }
 
 model ShipperProfile {
@@ -39,11 +40,13 @@ model ShipperProfile {
   user      User     @relation(fields: [userId], references: [id])
   name      String
   gstin     String?
+  planType  String   @default("FREE")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   loads   Load[]
   ratings Rating[]
+  Invoice Invoice[]
 }
 
 model DriverProfile {
@@ -53,6 +56,7 @@ model DriverProfile {
   name          String
   licenseNumber String?
   trustScore    Float    @default(5.0)
+  planType      String   @default("FREE")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -124,17 +128,20 @@ model Booking {
 }
 
 model Trip {
-  id              String           @id @default(uuid())
-  bookingId       String           @unique
-  booking         Booking          @relation(fields: [bookingId], references: [id])
-  driverId        String
-  driver          DriverProfile    @relation(fields: [driverId], references: [id])
-  status          String           @default("STARTED") // STARTED, IN_TRANSIT, ARRIVED, DELIVERED
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  locationPings   LocationPing[]
-  proofOfDelivery ProofOfDelivery?
-  rating          Rating?
+  id                String             @id @default(uuid())
+  bookingId         String             @unique
+  booking           Booking            @relation(fields: [bookingId], references: [id])
+  driverId          String
+  driver            DriverProfile      @relation(fields: [driverId], references: [id])
+  status            String             @default("STARTED") // STARTED, IN_TRANSIT, ARRIVED, DELIVERED
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  locationPings     LocationPing[]
+  proofOfDelivery   ProofOfDelivery?
+  platformFeeRecord PlatformFeeRecord?
+  disputes          Dispute[]
+  invoice           Invoice?
+  rating            Rating?
 }
 
 model LocationPing {
@@ -167,4 +174,40 @@ model Rating {
   score     Float // e.g., 1 to 5
   comment   String?
   createdAt DateTime       @default(now())
+}
+
+model PlatformFeeRecord {
+  id        String   @id @default(uuid())
+  tripId    String   @unique
+  trip      Trip     @relation(fields: [tripId], references: [id])
+  amount    Float
+  status    String   @default("PENDING") // PENDING, PAID, FAILED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Dispute {
+  id         String   @id @default(uuid())
+  tripId     String
+  trip       Trip     @relation(fields: [tripId], references: [id])
+  raisedById String
+  raisedBy   User     @relation(fields: [raisedById], references: [id])
+  reason     String
+  status     String   @default("OPEN") // OPEN, IN_REVIEW, RESOLVED
+  resolution String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Invoice {
+  id        String         @id @default(uuid())
+  tripId    String         @unique
+  trip      Trip           @relation(fields: [tripId], references: [id])
+  shipperId String
+  shipper   ShipperProfile @relation(fields: [shipperId], references: [id])
+  amount    Float
+  status    String         @default("ISSUED") // ISSUED, PAID, CANCELLED
+  fileUrl   String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 }
