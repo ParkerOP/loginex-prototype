@@ -41,6 +41,8 @@ model ShipperProfile {
   gstin  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  loads  Load[]
 }
 
 model DriverProfile {
@@ -53,7 +55,10 @@ model DriverProfile {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  vehicles Vehicle[]
+  vehicles         Vehicle[]
+  matchSuggestions MatchSuggestion[]
+  bookings         Booking[]
+  trips            Trip[]
 }
 
 model Vehicle {
@@ -66,4 +71,63 @@ model Vehicle {
   driverProfile   DriverProfile? @relation(fields: [driverProfileId], references: [id])
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+}
+
+model Load {
+  id                  String   @id @default(uuid())
+  shipperId           String
+  shipper             ShipperProfile @relation(fields: [shipperId], references: [id])
+  originAddress       String
+  originCity          String   // For simple matching
+  destinationAddress  String
+  destinationCity     String
+  cargoDescription    String
+  requiredVehicleType String
+  weight              Float?
+  scheduledTime       DateTime
+  specialInstructions String?
+  status              String   @default("POSTED") // POSTED, MATCHING, BOOKED, IN_TRANSIT, DELIVERED, CANCELLED
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  matchSuggestions    MatchSuggestion[]
+  booking             Booking?
+}
+
+model MatchSuggestion {
+  id        String   @id @default(uuid())
+  loadId    String
+  load      Load     @relation(fields: [loadId], references: [id])
+  driverId  String
+  driver    DriverProfile @relation(fields: [driverId], references: [id])
+  score     Float
+  status    String   @default("OFFERED") // OFFERED, ACCEPTED, REJECTED, EXPIRED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([loadId, driverId])
+}
+
+model Booking {
+  id        String   @id @default(uuid())
+  loadId    String   @unique
+  load      Load     @relation(fields: [loadId], references: [id])
+  driverId  String
+  driver    DriverProfile @relation(fields: [driverId], references: [id])
+  status    String   @default("CONFIRMED") // CONFIRMED, COMPLETED, CANCELLED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trip      Trip?
+}
+
+model Trip {
+  id        String   @id @default(uuid())
+  bookingId String   @unique
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  driverId  String
+  driver    DriverProfile @relation(fields: [driverId], references: [id])
+  status    String   @default("STARTED") // STARTED, IN_TRANSIT, ARRIVED, DELIVERED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
