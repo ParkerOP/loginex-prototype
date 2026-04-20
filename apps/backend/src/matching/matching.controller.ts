@@ -1,4 +1,11 @@
-import { Controller, Get, Param, Query, UseGuards, UnauthorizedException, Post, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  UnauthorizedException,
+  Post,
+  Body,
+} from '@nestjs/common';
 import { MatchingService } from './matching.service';
 import { CurrentUser } from '../auth/current-user.decorator';
 
@@ -15,7 +22,9 @@ export class MatchingController {
     @Query('vehicleType') vehicleType?: string,
   ): Promise<any> {
     if (!user || !user.id || user.role !== 'DRIVER') {
-      throw new UnauthorizedException('Access denied. Only DRIVER role can access available matches.');
+      throw new UnauthorizedException(
+        'Access denied. Only DRIVER role can access available matches.',
+      );
     }
 
     const parsedPage = page ? parseInt(page, 10) : 1;
@@ -26,17 +35,19 @@ export class MatchingController {
       parsedPage,
       parsedLimit,
       city,
-      vehicleType
+      vehicleType,
     );
   }
 
   @Post('suggest')
   async suggestMatch(
     @CurrentUser() user: any,
-    @Body() body: { loadId: string }
+    @Body() body: { loadId: string },
   ): Promise<any> {
     if (!user || !user.id || user.role !== 'DRIVER') {
-      throw new UnauthorizedException('Access denied. Only DRIVER role can suggest matches.');
+      throw new UnauthorizedException(
+        'Access denied. Only DRIVER role can suggest matches.',
+      );
     }
 
     return this.matchingService.createMatchSuggestion(body.loadId, user.id);

@@ -24,7 +24,7 @@ describe('MatchingService', () => {
             matchSuggestion: {
               findUnique: jest.fn(),
               create: jest.fn(),
-            }
+            },
           },
         },
         {
@@ -49,7 +49,9 @@ describe('MatchingService', () => {
     it('should throw NotFoundException if driver not found', async () => {
       jest.spyOn(prisma.driverProfile, 'findUnique').mockResolvedValue(null);
 
-      await expect(service.getAvailableMatchesForDriver('invalid')).rejects.toThrow('Driver not found');
+      await expect(
+        service.getAvailableMatchesForDriver('invalid'),
+      ).rejects.toThrow('Driver not found');
     });
 
     it('should return empty matches if driver has no vehicles', async () => {
@@ -90,7 +92,7 @@ describe('MatchingService', () => {
       jest.spyOn(prisma.load, 'findUnique').mockResolvedValue({
         id: 'load-1',
         status: 'POSTED',
-        requiredVehicleType: 'TATA_ACE'
+        requiredVehicleType: 'TATA_ACE',
       } as any);
 
       jest.spyOn(prisma.driverProfile, 'findUnique').mockResolvedValue({
@@ -100,7 +102,9 @@ describe('MatchingService', () => {
       } as any);
 
       jest.spyOn(prisma.matchSuggestion, 'findUnique').mockResolvedValue(null);
-      jest.spyOn(prisma.matchSuggestion, 'create').mockResolvedValue({ id: 'suggestion-1' } as any);
+      jest
+        .spyOn(prisma.matchSuggestion, 'create')
+        .mockResolvedValue({ id: 'suggestion-1' } as any);
 
       const result = await service.createMatchSuggestion('load-1', 'driver-1');
       expect(result).toEqual({ id: 'suggestion-1' });
@@ -109,8 +113,8 @@ describe('MatchingService', () => {
           loadId: 'load-1',
           driverId: 'driver-1',
           score: 70,
-          status: 'OFFERED'
-        }
+          status: 'OFFERED',
+        },
       });
     });
   });
