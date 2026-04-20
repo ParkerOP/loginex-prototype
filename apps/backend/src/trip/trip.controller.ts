@@ -43,6 +43,11 @@ export class TripController {
     });
   }
 
+  @Get(':id/pings')
+  async getLocationPings(@Param('id') id: string) {
+    return this.tripService.getLocationPings(id);
+  }
+
   @Post(':id/pod')
   @UseInterceptors(
     FileInterceptor('file', {

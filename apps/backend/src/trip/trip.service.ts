@@ -199,6 +199,21 @@ export class TripService {
     });
   }
 
+  async getLocationPings(tripId: string) {
+    const trip = await this.prisma.trip.findUnique({
+      where: { id: tripId },
+    });
+
+    if (!trip) {
+      throw new NotFoundException('Trip not found');
+    }
+
+    return this.prisma.locationPing.findMany({
+      where: { tripId },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
   async getReturnLoadSuggestions(tripId: string) {
     const trip = await this.prisma.trip.findUnique({
       where: { id: tripId },
