@@ -465,7 +465,7 @@ Based on the implemented features and the guidelines set forth in AGENTS.md, her
   Backend Task: Ensure the /trip and /booking services have endpoints for drivers to update trip statuses (e.g., STARTED, ARRIVED, DELIVERED). Implement strict state machine transitions and audit logging for these updates.
   Frontend Task: Build out the /my-trips page for the Driver UI. Display active trips prominently. Allow drivers to update the status of their trips through intuitive action buttons.
 
-- [ ] **Proof of Delivery (POD) Capture (Medium Priority)**
+- [x] **Proof of Delivery (POD) Capture (Medium Priority)**
   Goal: Complete the core logistics loop by enabling drivers to submit proof of delivery.
   Backend Task: Ensure there is a secure endpoint to accept POD uploads (image URLs and notes) associated with a specific trip. Integrate with cloud storage (e.g., S3) if not already done, or set up a secure mock for the prototype.
   Frontend Task: Add a "Submit POD" step or modal within the /my-trips active trip view. Allow drivers to upload an image and add notes to finalize the delivery process.
