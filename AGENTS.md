@@ -448,3 +448,31 @@ Add only after phase-1 validation:
 Keep all future additions backward-compatible and incremental.
 
 This is to be a working 'prototype', don't do too much.
+
+# Review and Suggested Next Steps
+
+The foundational Role-Based UI has been implemented. Users can now explicitly choose to be a "Shipper" or a "Driver" upon logging in via the NextAuth credentials page. The session object propagates this role, allowing the Sidebar navigation to dynamically render tools specific to the user's role (e.g., Drivers see "Find Loads", "My Trips"). Basic placeholder pages exist for these new routes.
+
+Based on the implemented features and the guidelines set forth in AGENTS.md, here are the suggested actionable next steps categorized by impact:
+
+- [x] **Driver Load Discovery and Matching (High Priority)**
+  Goal: Allow Drivers to actively find and express interest in loads, connecting the Shipper and Driver ecosystems.
+  Backend Task: Expose the /matching API endpoint (which evaluates load criteria against driver profiles) securely to authenticated drivers. Ensure proper input validation and pagination are implemented.
+  Frontend Task: Build out the /find-loads web page. Connect it to the backend matching service. Include filter options (e.g., by city, vehicle type). Add a "Suggest Match" or "Accept Load" button that calls the backend to create a MatchSuggestion or directly initiate a Booking.
+
+- [ ] **Driver Trip Management and Updates (Medium Priority)**
+  Goal: Enable drivers to manage their accepted trips and update statuses.
+  Backend Task: Ensure the /trip and /booking services have endpoints for drivers to update trip statuses (e.g., STARTED, ARRIVED, DELIVERED). Implement strict state machine transitions and audit logging for these updates.
+  Frontend Task: Build out the /my-trips page for the Driver UI. Display active trips prominently. Allow drivers to update the status of their trips through intuitive action buttons.
+
+- [ ] **Proof of Delivery (POD) Capture (Medium Priority)**
+  Goal: Complete the core logistics loop by enabling drivers to submit proof of delivery.
+  Backend Task: Ensure there is a secure endpoint to accept POD uploads (image URLs and notes) associated with a specific trip. Integrate with cloud storage (e.g., S3) if not already done, or set up a secure mock for the prototype.
+  Frontend Task: Add a "Submit POD" step or modal within the /my-trips active trip view. Allow drivers to upload an image and add notes to finalize the delivery process.
+
+- [ ] **Live Tracking Simulation (Lower Priority for Prototype Web, Essential for Mobile)**
+  Goal: Provide shippers with visibility into trip progress.
+  Backend Task: Verify the /trip/:id/ping endpoint functionality for ingesting location updates.
+  Frontend Task: Integrate a simulated tracking view on the Shipper's /loads/[id] page, perhaps polling the backend for recent LocationPing records. For the Driver side (if implementing tracking on the web before mobile), provide a button to manually "ping" the current simulated location.
+
+Recommendation for Next Immediate Action: I recommend starting with 2. Driver Trip Management and Updates.

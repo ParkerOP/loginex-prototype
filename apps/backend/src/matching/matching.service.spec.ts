@@ -2,11 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MatchingService } from './matching.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoadService } from '../load/load.service';
-import { NotFoundException } from '@nestjs/common';
 
 describe('MatchingService', () => {
   let service: MatchingService;
-  let prismaService: PrismaService;
+  let prisma: PrismaService;
   let loadService: LoadService;
 
   beforeEach(async () => {
@@ -19,6 +18,13 @@ describe('MatchingService', () => {
             driverProfile: {
               findUnique: jest.fn(),
             },
+            load: {
+              findUnique: jest.fn(),
+            },
+            matchSuggestion: {
+              findUnique: jest.fn(),
+              create: jest.fn(),
+            }
           },
         },
         {
@@ -31,7 +37,7 @@ describe('MatchingService', () => {
     }).compile();
 
     service = module.get<MatchingService>(MatchingService);
-    prismaService = module.get<PrismaService>(PrismaService);
+    prisma = module.get<PrismaService>(PrismaService);
     loadService = module.get<LoadService>(LoadService);
   });
 
@@ -41,48 +47,71 @@ describe('MatchingService', () => {
 
   describe('getAvailableMatchesForDriver', () => {
     it('should throw NotFoundException if driver not found', async () => {
-      (prismaService.driverProfile.findUnique as jest.Mock).mockResolvedValue(
-        null,
-      );
+      jest.spyOn(prisma.driverProfile, 'findUnique').mockResolvedValue(null);
 
-      await expect(
-        service.getAvailableMatchesForDriver('driver-1'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.getAvailableMatchesForDriver('invalid')).rejects.toThrow('Driver not found');
     });
 
-    it('should return empty array if driver has no vehicles', async () => {
-      (prismaService.driverProfile.findUnique as jest.Mock).mockResolvedValue({
+    it('should return empty matches if driver has no vehicles', async () => {
+      jest.spyOn(prisma.driverProfile, 'findUnique').mockResolvedValue({
         id: 'driver-1',
         vehicles: [],
-      });
+      } as any);
 
       const result = await service.getAvailableMatchesForDriver('driver-1');
-      expect(result).toEqual([]);
+      expect(result.matches).toEqual([]);
+      expect(result.total).toEqual(0);
     });
 
     it('should correctly score loads based on vehicle type and trust score', async () => {
-      (prismaService.driverProfile.findUnique as jest.Mock).mockResolvedValue({
+      jest.spyOn(prisma.driverProfile, 'findUnique').mockResolvedValue({
         id: 'driver-1',
         trustScore: 4.0,
         vehicles: [{ type: 'TATA_ACE' }],
-      });
+      } as any);
 
-      (loadService.getAvailableLoads as jest.Mock).mockResolvedValue([
+      jest.spyOn(loadService, 'getAvailableLoads').mockResolvedValue([
         { id: 'load-1', requiredVehicleType: 'TATA_ACE' },
         { id: 'load-2', requiredVehicleType: '14_FT' },
-      ]);
+      ] as any);
 
       const result = await service.getAvailableMatchesForDriver('driver-1');
 
-      // Expected scores:
-      // load-1: 50 (vehicle match) + (4.0 * 5) = 70
-      // load-2: 0 (no match) + (4.0 * 5) = 20
+      expect(result.matches.length).toBe(2);
+      expect(result.matches[0].score).toBe(70);
+      expect(result.matches[0].load.id).toBe('load-1');
+      expect(result.matches[1].score).toBe(20);
+      expect(result.matches[1].load.id).toBe('load-2');
+    });
+  });
 
-      expect(result.length).toBe(2);
-      expect(result[0].score).toBe(70);
-      expect(result[0].load.id).toBe('load-1');
-      expect(result[1].score).toBe(20);
-      expect(result[1].load.id).toBe('load-2');
+  describe('createMatchSuggestion', () => {
+    it('should create a match suggestion successfully', async () => {
+      jest.spyOn(prisma.load, 'findUnique').mockResolvedValue({
+        id: 'load-1',
+        status: 'POSTED',
+        requiredVehicleType: 'TATA_ACE'
+      } as any);
+
+      jest.spyOn(prisma.driverProfile, 'findUnique').mockResolvedValue({
+        id: 'driver-1',
+        trustScore: 4.0,
+        vehicles: [{ type: 'TATA_ACE' }],
+      } as any);
+
+      jest.spyOn(prisma.matchSuggestion, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(prisma.matchSuggestion, 'create').mockResolvedValue({ id: 'suggestion-1' } as any);
+
+      const result = await service.createMatchSuggestion('load-1', 'driver-1');
+      expect(result).toEqual({ id: 'suggestion-1' });
+      expect(prisma.matchSuggestion.create).toHaveBeenCalledWith({
+        data: {
+          loadId: 'load-1',
+          driverId: 'driver-1',
+          score: 70,
+          status: 'OFFERED'
+        }
+      });
     });
   });
 });
