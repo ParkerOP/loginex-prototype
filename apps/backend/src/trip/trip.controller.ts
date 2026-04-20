@@ -56,6 +56,11 @@ export class TripController {
     });
   }
 
+  @Get('driver/:driverId')
+  async getTripsByDriver(@Param('driverId') driverId: string) {
+    return this.tripService.getTripsByDriver(driverId);
+  }
+
   @Get(':id/return-loads')
   async getReturnLoads(@Param('id') id: string) {
     return this.tripService.getReturnLoadSuggestions(id);

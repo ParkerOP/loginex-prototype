@@ -7,6 +7,7 @@ import { BadRequestException } from '@nestjs/common';
 const mockPrismaService = {
   trip: {
     findUnique: jest.fn(),
+    findMany: jest.fn(),
     update: jest.fn(),
   },
   locationPing: {
@@ -150,6 +151,31 @@ describe('TripService', () => {
         where: { id: 'driver1' },
         data: { trustScore: 4.5 },
       });
+    });
+  });
+
+  describe('getTripsByDriver', () => {
+    it('should return trips for a given driver', async () => {
+      const mockTrips = [
+        { id: 'trip-1', driverId: 'driver-1', booking: { load: {} } },
+      ];
+
+      mockPrismaService.trip.findMany.mockResolvedValue(mockTrips);
+
+      const result = await service.getTripsByDriver('driver-1');
+
+      expect(mockPrismaService.trip.findMany).toHaveBeenCalledWith({
+        where: { driverId: 'driver-1' },
+        include: {
+          booking: {
+            include: {
+              load: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      expect(result).toEqual(mockTrips);
     });
   });
 

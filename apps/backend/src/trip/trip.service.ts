@@ -185,6 +185,20 @@ export class TripService {
     });
   }
 
+  async getTripsByDriver(driverId: string) {
+    return this.prisma.trip.findMany({
+      where: { driverId },
+      include: {
+        booking: {
+          include: {
+            load: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async getReturnLoadSuggestions(tripId: string) {
     const trip = await this.prisma.trip.findUnique({
       where: { id: tripId },

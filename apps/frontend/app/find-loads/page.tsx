@@ -39,12 +39,13 @@ export default function FindLoadsPage() {
     if (session?.user) {
       fetchMatches();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, cityFilter, vehicleTypeFilter]);
 
   const fetchMatches = async () => {
     setLoading(true);
     try {
-      let queryParams = new URLSearchParams();
+      const queryParams = new URLSearchParams();
       if (cityFilter) queryParams.append("city", cityFilter);
       if (vehicleTypeFilter && vehicleTypeFilter !== "ALL") queryParams.append("vehicleType", vehicleTypeFilter);
 
@@ -69,9 +70,10 @@ export default function FindLoadsPage() {
       toast.success("Match suggestion sent successfully!");
       // Remove the load from the list after successful suggestion
       setMatches(prevMatches => prevMatches.filter(m => m.load.id !== loadId));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to suggest match", error);
-      toast.error(error.message || "Failed to suggest match");
+      const errorMessage = error instanceof Error ? error.message : "Failed to suggest match";
+      toast.error(errorMessage);
     } finally {
       setSuggesting(null);
     }

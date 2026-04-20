@@ -27,8 +27,6 @@ import { PrototypeAuthMiddleware } from './auth/prototype-auth.middleware';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(PrototypeAuthMiddleware)
-      .forRoutes('*'); // Apply globally to populate req.user for prototype
+    consumer.apply(PrototypeAuthMiddleware).forRoutes('*'); // Apply globally to populate req.user for prototype
   }
 }

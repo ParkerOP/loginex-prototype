@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoadService } from '../load/load.service';
 
@@ -15,7 +19,7 @@ export class MatchingService {
     page: number = 1,
     limit: number = 10,
     city?: string,
-    vehicleType?: string
+    vehicleType?: string,
   ) {
     const driver = await this.prisma.driverProfile.findUnique({
       where: { id: driverId },
@@ -35,15 +39,16 @@ export class MatchingService {
     let filteredLoads = availableLoads;
 
     if (city) {
-      filteredLoads = filteredLoads.filter(load =>
-        load.originCity.toLowerCase().includes(city.toLowerCase()) ||
-        load.destinationCity.toLowerCase().includes(city.toLowerCase())
+      filteredLoads = filteredLoads.filter(
+        (load) =>
+          load.originCity.toLowerCase().includes(city.toLowerCase()) ||
+          load.destinationCity.toLowerCase().includes(city.toLowerCase()),
       );
     }
 
     if (vehicleType) {
-      filteredLoads = filteredLoads.filter(load =>
-        load.requiredVehicleType === vehicleType
+      filteredLoads = filteredLoads.filter(
+        (load) => load.requiredVehicleType === vehicleType,
       );
     }
 
@@ -82,13 +87,13 @@ export class MatchingService {
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     };
   }
 
   async createMatchSuggestion(loadId: string, driverId: string) {
     const load = await this.prisma.load.findUnique({
-      where: { id: loadId }
+      where: { id: loadId },
     });
 
     if (!load) {
@@ -101,7 +106,7 @@ export class MatchingService {
 
     const driver = await this.prisma.driverProfile.findUnique({
       where: { id: driverId },
-      include: { vehicles: true }
+      include: { vehicles: true },
     });
 
     if (!driver) {
@@ -124,13 +129,15 @@ export class MatchingService {
       where: {
         loadId_driverId: {
           loadId,
-          driverId
-        }
-      }
+          driverId,
+        },
+      },
     });
 
     if (existing) {
-      throw new BadRequestException('Match suggestion already exists for this load and driver');
+      throw new BadRequestException(
+        'Match suggestion already exists for this load and driver',
+      );
     }
 
     return this.prisma.matchSuggestion.create({
@@ -138,8 +145,8 @@ export class MatchingService {
         loadId,
         driverId,
         score,
-        status: 'OFFERED'
-      }
+        status: 'OFFERED',
+      },
     });
   }
 }
