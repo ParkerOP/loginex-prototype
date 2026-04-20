@@ -6,6 +6,10 @@ import { fetchApi } from "@/lib/api/client";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 interface Load {
@@ -26,6 +30,7 @@ interface Trip {
   id: string;
   status: string;
   booking: Booking;
+  proofOfDelivery?: { id: string } | null;
 }
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -53,6 +58,13 @@ export default function MyTripsPage() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState<string | null>(null);
+
+  // POD Modal State
+  const [podModalOpen, setPodModalOpen] = useState(false);
+  const [podTripId, setPodTripId] = useState<string | null>(null);
+  const [podFile, setPodFile] = useState<File | null>(null);
+  const [podNotes, setPodNotes] = useState("");
+  const [submittingPod, setSubmittingPod] = useState(false);
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -93,6 +105,54 @@ export default function MyTripsPage() {
     }
   };
 
+  const openPodModal = (tripId: string) => {
+    setPodTripId(tripId);
+    setPodFile(null);
+    setPodNotes("");
+    setPodModalOpen(true);
+  };
+
+  const handleSubmitPod = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!podTripId || !podFile) return;
+
+    setSubmittingPod(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", podFile);
+      if (podNotes) {
+        formData.append("notes", podNotes);
+      }
+      formData.append("driverId", session!.user.id);
+
+      // fetchApi defaults to application/json if we don't override.
+      // But actually, fetch API handles FormData automatically if we omit Content-Type.
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1";
+      const response = await fetch(`${baseUrl}/trips/${podTripId}/pod`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${(session as unknown as { accessToken?: string })?.accessToken}`, // Cast to fix missing type definition
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to submit POD");
+      }
+
+      toast.success("Proof of Delivery submitted successfully");
+      setPodModalOpen(false);
+      fetchTrips(); // Refresh the list to update POD status
+    } catch (error: unknown) {
+      console.error("Failed to submit POD", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to submit POD";
+      toast.error(errorMessage);
+    } finally {
+      setSubmittingPod(false);
+    }
+  };
+
   if (!session) {
     return <div>Please log in to view your trips.</div>;
   }
@@ -114,6 +174,7 @@ export default function MyTripsPage() {
           {trips.map((trip) => {
             const load = trip.booking.load;
             const nextStatuses = VALID_TRANSITIONS[trip.status] || [];
+            const canSubmitPod = (trip.status === "ARRIVED" || trip.status === "DELIVERED") && !trip.proofOfDelivery;
 
             return (
               <Card key={trip.id} className="flex flex-col">
@@ -145,7 +206,24 @@ export default function MyTripsPage() {
                       {updating === trip.id ? "Updating..." : ACTION_LABELS[nextStatus] || "Update Status"}
                     </Button>
                   ))}
-                  {trip.status === "DELIVERED" && (
+
+                  {canSubmitPod && (
+                    <Button
+                      variant="outline"
+                      className="w-full border-blue-500 text-blue-600 hover:bg-blue-50"
+                      onClick={() => openPodModal(trip.id)}
+                    >
+                      Submit POD
+                    </Button>
+                  )}
+
+                  {trip.proofOfDelivery && (
+                    <Badge variant="outline" className="w-full justify-center bg-green-50 text-green-700 border-green-200 py-1.5">
+                      POD Submitted
+                    </Badge>
+                  )}
+
+                  {trip.status === "DELIVERED" && !canSubmitPod && !trip.proofOfDelivery && (
                      <Button variant="outline" className="w-full" disabled>
                        Completed
                      </Button>
@@ -156,6 +234,42 @@ export default function MyTripsPage() {
           })}
         </div>
       )}
+
+      {/* POD Submission Modal */}
+      <Dialog open={podModalOpen} onOpenChange={setPodModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Submit Proof of Delivery</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmitPod} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="podImage">Image</Label>
+              <Input
+                id="podImage"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setPodFile(e.target.files?.[0] || null)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="podNotes">Delivery Notes (Optional)</Label>
+              <Textarea
+                id="podNotes"
+                placeholder="E.g., Left with security guard"
+                value={podNotes}
+                onChange={(e) => setPodNotes(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setPodModalOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={!podFile || submittingPod}>
+                {submittingPod ? "Submitting..." : "Submit POD"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,4 +1,17 @@
-import { Controller, Post, Body, Param, Put, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Param,
+  Put,
+  Get,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { TripService } from './trip.service';
 
 @Controller('v1/trips')
@@ -31,14 +44,34 @@ export class TripController {
   }
 
   @Post(':id/pod')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, callback) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          callback(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+        },
+      }),
+    }),
+  )
   async submitPOD(
     @Param('id') id: string,
-    @Body() body: { imageUrl: string; notes?: string; driverId: string },
+    @Body() body: { notes?: string; driverId: string },
+    @UploadedFile() file: Express.Multer.File,
   ) {
+    if (!file) {
+      throw new BadRequestException('Image file is required');
+    }
+
+    const imageUrl = `/uploads/${file.filename}`;
+
     return this.tripService.submitPOD({
       tripId: id,
       driverId: body.driverId,
-      imageUrl: body.imageUrl,
+      imageUrl,
       notes: body.notes,
     });
   }
