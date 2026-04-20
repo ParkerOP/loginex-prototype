@@ -8,6 +8,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types"
   },
+  "packageManager": "pnpm@9.0.0",
   "devDependencies": {
     "@prisma/client": "^7.7.0",
     "prettier": "^3.7.4",
@@ -15,8 +16,10 @@
     "turbo": "^2.9.6",
     "typescript": "5.9.2"
   },
-  "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.7.5"
   }
 }

@@ -1,17 +1,79 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, MapPin, Navigation, Phone, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, CheckCircle2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+
+import io from "socket.io-client";
+import dynamic from 'next/dynamic';
+
+// Dynamic import for leaflet map to avoid SSR issues
+const Map = dynamic(
+  () => import('../../../components/Map'), // We'll create this component
+  { ssr: false, loading: () => <div className="h-64 bg-muted/30 flex items-center justify-center animate-pulse">Loading Map...</div> }
+);
+
+interface LocationPing {
+  id: string;
+  latitude: number;
+  longitude: number;
+  createdAt: string;
+}
 
 export default function LoadDetailsPage() {
   const params = useParams();
   const id = params.id as string;
+
+
+  const [pings, setPings] = useState<LocationPing[]>([]);
+  const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
+
+  useEffect(() => {
+    // 1. Fetch historical pings
+    const fetchPings = async () => {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/v1";
+        const res = await fetch(`${baseUrl}/trips/${id}/pings`);
+        if (res.ok) {
+          const data = await res.json();
+          setPings(data);
+          if (data.length > 0) {
+            const last = data[data.length - 1];
+            setCurrentLocation({ lat: last.latitude, lng: last.longitude });
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch historical pings", err);
+      }
+    };
+    fetchPings();
+
+    // 2. Setup WebSocket connection
+    const socketUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3000/v1/trips/tracking";
+    const newSocket = io(socketUrl);
+
+
+    newSocket.on('connect', () => {
+      console.log('Connected to websocket');
+      newSocket.emit('joinTrip', { tripId: id });
+    });
+
+    newSocket.on('locationUpdate', (ping: LocationPing) => {
+      console.log('Received location update', ping);
+      setPings(prev => [...prev, ping]);
+      setCurrentLocation({ lat: ping.latitude, lng: ping.longitude });
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, [id]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -34,11 +96,11 @@ export default function LoadDetailsPage() {
         {/* Left Column: Tracking and Driver Info */}
         <div className="md:col-span-2 space-y-6">
           <Card className="overflow-hidden">
-            {/* Map Tracking Placeholder */}
-            <div className="h-64 bg-muted/30 flex flex-col items-center justify-center border-b relative">
-              <Navigation className="h-10 w-10 text-primary mb-2 animate-pulse" />
-              <p className="text-sm font-medium text-muted-foreground">Live Tracking Map (Google Maps Placeholder)</p>
-              <div className="absolute bottom-4 left-4 right-4 bg-background/90 backdrop-blur-sm border rounded-lg p-3 flex justify-between items-center shadow-sm">
+            {/* Live Tracking Map */}
+            <div className="h-64 border-b relative">
+              <Map currentLocation={currentLocation} path={pings} />
+
+              <div className="absolute bottom-4 left-4 right-4 bg-background/90 backdrop-blur-sm border rounded-lg p-3 flex justify-between items-center shadow-sm z-[1000]">
                  <div>
                     <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Estimated Arrival</p>
                     <p className="font-bold text-lg">14:30 PM</p>
@@ -91,7 +153,7 @@ export default function LoadDetailsPage() {
                   <div className="mt-1"><AlertCircle className="h-5 w-5 text-blue-500" /></div>
                   <div>
                     <p className="font-medium">In Transit</p>
-                    <p className="text-sm text-muted-foreground">Current Status • Updated 2 mins ago</p>
+                    <p className="text-sm text-muted-foreground">Current Status • {pings.length > 0 ? "Live Tracking" : "Waiting for updates"}</p>
                   </div>
                 </div>
                 <div className="flex gap-4 opacity-50">
@@ -139,7 +201,6 @@ export default function LoadDetailsPage() {
                  <p className="text-sm font-medium">Payment Pending</p>
                  <p className="text-xs text-muted-foreground">Invoice will be generated upon delivery confirmation.</p>
                </div>
-               {/* Razorpay Integration Placeholder */}
                <Button className="w-full" disabled>
                  Pay via Razorpay (Disabled until POD)
                </Button>
