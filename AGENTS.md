@@ -460,7 +460,7 @@ Based on the implemented features and the guidelines set forth in AGENTS.md, her
   Backend Task: Expose the /matching API endpoint (which evaluates load criteria against driver profiles) securely to authenticated drivers. Ensure proper input validation and pagination are implemented.
   Frontend Task: Build out the /find-loads web page. Connect it to the backend matching service. Include filter options (e.g., by city, vehicle type). Add a "Suggest Match" or "Accept Load" button that calls the backend to create a MatchSuggestion or directly initiate a Booking.
 
-- [ ] **Driver Trip Management and Updates (Medium Priority)**
+- [x] **Driver Trip Management and Updates (Medium Priority)**
   Goal: Enable drivers to manage their accepted trips and update statuses.
   Backend Task: Ensure the /trip and /booking services have endpoints for drivers to update trip statuses (e.g., STARTED, ARRIVED, DELIVERED). Implement strict state machine transitions and audit logging for these updates.
   Frontend Task: Build out the /my-trips page for the Driver UI. Display active trips prominently. Allow drivers to update the status of their trips through intuitive action buttons.
@@ -474,5 +474,3 @@ Based on the implemented features and the guidelines set forth in AGENTS.md, her
   Goal: Provide shippers with visibility into trip progress.
   Backend Task: Verify the /trip/:id/ping endpoint functionality for ingesting location updates.
   Frontend Task: Integrate a simulated tracking view on the Shipper's /loads/[id] page, perhaps polling the backend for recent LocationPing records. For the Driver side (if implementing tracking on the web before mobile), provide a button to manually "ping" the current simulated location.
-
-Recommendation for Next Immediate Action: I recommend starting with 2. Driver Trip Management and Updates.
