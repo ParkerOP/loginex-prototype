@@ -6,7 +6,7 @@ The LogineX mobile application is the primary interface for Drivers (load discov
 ## 2. Architecture Principles
 - **Unified App:** A single codebase for both Shippers and Drivers. Role routing occurs post-authentication.
 - **Offline-Tolerance & Sync:** Drivers may operate in poor network areas. Core flows (e.g., POD capture, location pings) will cache locally and batch-sync upon connection using `sqflite` and the existing `/pings/batch` API.
-- **Maximum Visual Fidelity & Premium Experience:** The application must deliver an "investor-ready" premium experience utilizing maximum visual fidelity and heavy, dynamic animations by default. This will involve using several external libraries (such as Lottie, flutter_animate, Rive, and complex physics-based UI transitions) to create a stunning, high-end feel.
+- **Maximum Visual Fidelity & Premium Experience:** The application must deliver an "investor-ready" premium experience utilizing maximum visual fidelity and heavy, dynamic animations by default. This will involve using several external libraries (such as Lottie, flutter_animate, Rive, shader libraries and complex physics-based UI transitions to create a stunning, high-end feel.
 - **Graceful UI Degradation:** Utilizing `device_info_plus` and `connectivity_plus`, the app will monitor the device capabilities and network conditions. If the connection suffers or if the device is low-end, the app will gracefully downgrade by disabling heavy features (Lottie, complex animations, parallax) and defaulting to simpler layouts and standard list views.
 - **State Management:** Using `Riverpod` or `Bloc` to securely manage authentication tokens, active trips, and WebSocket tracking states.
 
