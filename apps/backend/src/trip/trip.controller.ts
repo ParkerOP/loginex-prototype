@@ -13,6 +13,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { TripService } from './trip.service';
+import { UpdateTripStatusDto } from './dto/update-trip-status.dto';
+import { CreateLocationPingDto } from './dto/create-location-ping.dto';
+import { CreateLocationPingBatchDto } from './dto/create-location-ping-batch.dto';
 
 @Controller('v1/trips')
 export class TripController {
@@ -21,26 +24,34 @@ export class TripController {
   @Put(':id/status')
   async updateTripStatus(
     @Param('id') id: string,
-    @Body() body: { status: string; driverId: string },
+    @Body() updateTripStatusDto: UpdateTripStatusDto,
   ) {
     return this.tripService.updateTripStatus({
       tripId: id,
-      driverId: body.driverId,
-      status: body.status,
+      driverId: updateTripStatusDto.driverId,
+      status: updateTripStatusDto.status,
     });
   }
 
   @Post(':id/pings')
   async addLocationPing(
     @Param('id') id: string,
-    @Body() body: { latitude: number; longitude: number; accuracy?: number },
+    @Body() createLocationPingDto: CreateLocationPingDto,
   ) {
     return this.tripService.addLocationPing({
       tripId: id,
-      latitude: body.latitude,
-      longitude: body.longitude,
-      accuracy: body.accuracy,
+      latitude: createLocationPingDto.latitude,
+      longitude: createLocationPingDto.longitude,
+      accuracy: createLocationPingDto.accuracy,
     });
+  }
+
+  @Post(':id/pings/batch')
+  async addLocationPingBatch(
+    @Param('id') id: string,
+    @Body() createLocationPingBatchDto: CreateLocationPingBatchDto,
+  ) {
+    return this.tripService.addLocationPingBatch(id, createLocationPingBatchDto.pings);
   }
 
   @Get(':id/pings')

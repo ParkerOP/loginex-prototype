@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { MatchingService } from './matching.service';
 import { CurrentUser } from '../auth/current-user.decorator';
+import { SuggestMatchDto } from './dto/suggest-match.dto';
 
 @Controller('v1/matches')
 export class MatchingController {
@@ -42,7 +43,7 @@ export class MatchingController {
   @Post('suggest')
   async suggestMatch(
     @CurrentUser() user: any,
-    @Body() body: { loadId: string },
+    @Body() suggestMatchDto: SuggestMatchDto,
   ): Promise<any> {
     if (!user || !user.id || user.role !== 'DRIVER') {
       throw new UnauthorizedException(
@@ -50,6 +51,6 @@ export class MatchingController {
       );
     }
 
-    return this.matchingService.createMatchSuggestion(body.loadId, user.id);
+    return this.matchingService.createMatchSuggestion(suggestMatchDto.loadId, user.id);
   }
 }

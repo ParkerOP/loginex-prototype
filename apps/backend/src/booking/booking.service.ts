@@ -20,7 +20,25 @@ export class BookingService {
     }
 
     if (load.status !== 'POSTED') {
-      throw new BadRequestException('Load is no longer available');
+      throw new BadRequestException('Load is no longer available. Current status: ' + load.status);
+    }
+
+    // Check if the driver exists
+    const driver = await this.prisma.driverProfile.findUnique({
+      where: { id: data.driverId },
+    });
+
+    if (!driver) {
+      throw new NotFoundException('Driver profile not found');
+    }
+
+    // Explicit check for existing booking to prevent race conditions or duplicate accepts
+    const existingBooking = await this.prisma.booking.findUnique({
+      where: { loadId: data.loadId },
+    });
+
+    if (existingBooking) {
+      throw new BadRequestException('Load has already been booked by another driver');
     }
 
     // Wrap the booking and state change in a transaction
@@ -45,7 +63,7 @@ export class BookingService {
         data: {
           bookingId: booking.id,
           driverId: data.driverId,
-          status: 'STARTED',
+          status: 'STARTED', // Ensure the trip starts in STARTED state
         },
       });
 
