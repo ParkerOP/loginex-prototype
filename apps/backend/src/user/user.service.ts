@@ -6,7 +6,10 @@ import { CreateDeviceTokenDto } from './dto/create-device-token.dto';
 export class UserService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async registerDeviceToken(userId: string, createDeviceTokenDto: CreateDeviceTokenDto) {
+  async registerDeviceToken(
+    userId: string,
+    createDeviceTokenDto: CreateDeviceTokenDto,
+  ) {
     const { token, platform } = createDeviceTokenDto;
 
     // Use upsert to handle existing tokens (e.g., if re-installing app)

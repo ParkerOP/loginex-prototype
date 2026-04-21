@@ -7,9 +7,7 @@ export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
 
   @Post('accept')
-  async acceptLoad(
-    @Body() acceptBookingDto: AcceptBookingDto,
-  ): Promise<any> {
+  async acceptLoad(@Body() acceptBookingDto: AcceptBookingDto): Promise<any> {
     return this.bookingService.acceptLoad(acceptBookingDto);
   }
 }

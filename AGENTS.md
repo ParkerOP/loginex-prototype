@@ -502,7 +502,7 @@ The core logistics loop (posting, matching, booking, tracking, POD, closing) has
 - **Missing Strict DTO Validation:** The current APIs accept arbitrary payloads. This violates `AGENTS.md` guidelines and is a risk for mobile clients, which expect strict JSON contracts to generate strong types.
 
 ### Required Actions
-- **High Priority:** Introduce Data Transfer Objects (DTOs) using `class-validator` and `class-transformer` across all core loop endpoints (Loads, Matches, Bookings, Trips).
+- [x] **High Priority:** Introduce Data Transfer Objects (DTOs) using `class-validator` and `class-transformer` across all core loop endpoints (Loads, Matches, Bookings, Trips).
 - Ensure any added validation strictly maintains backward compatibility with the payloads currently sent by the Next.js web app.
 
 ## 3. Mobile-Specific Features & Web Compatibility
@@ -520,6 +520,6 @@ The core logistics loop (posting, matching, booking, tracking, POD, closing) has
 - [x] **Track (`POST /v1/trips/:id/pings`):** Needs optimization for batched arrays of pings for offline tolerance.
 
 ## 5. Architectural Proposal for Mobile Integration
-1. **Shared API Contracts:** Establish a clear OpenAPI/Swagger specification generated from the NestJS DTO decorators. This serves as the single source of truth for generating Flutter models and maintaining Next.js types.
+1. [x] **Shared API Contracts:** Establish a clear OpenAPI/Swagger specification generated from the NestJS DTO decorators. This serves as the single source of truth for generating Flutter models and maintaining Next.js types.
 2. **WebSocket vs. Polling:** While `AGENTS.md` mentions WebSockets for live tracking, the backend must support graceful fallback to standard HTTP polling (`GET /v1/trips/:id/pings`) when mobile clients experience degraded socket connections over weak cellular networks.
 3. **Lightweight Payloads:** Ensure list endpoints (like `/v1/matches/available`) implement cursor pagination and return minimal payloads to conserve bandwidth for low-end Android devices on unstable networks.

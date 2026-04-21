@@ -51,6 +51,9 @@ export class MatchingController {
       );
     }
 
-    return this.matchingService.createMatchSuggestion(suggestMatchDto.loadId, user.id);
+    return this.matchingService.createMatchSuggestion(
+      suggestMatchDto.loadId,
+      user.id,
+    );
   }
 }
