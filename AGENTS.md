@@ -515,9 +515,9 @@ The core logistics loop (posting, matching, booking, tracking, POD, closing) has
 - **Push Notifications:** The mobile app will require device token registration for FCM/APNs. *Web Compatibility Note: Create a new endpoint (e.g., `POST /v1/users/device-tokens`) specifically for mobile. The web app can simply ignore it until web push is needed.*
 
 ## 4. Core Loop Readiness Checklist
-- [ ] **Post -> Match (`POST /v1/loads`, `POST /v1/matches/suggest`):** Needs strict DTO validation.
-- [ ] **Book (`POST /v1/bookings/accept`):** Needs strict state transition validation.
-- [ ] **Track (`POST /v1/trips/:id/pings`):** Needs optimization for batched arrays of pings for offline tolerance.
+- [x] **Post -> Match (`POST /v1/loads`, `POST /v1/matches/suggest`):** Needs strict DTO validation.
+- [x] **Book (`POST /v1/bookings/accept`):** Needs strict state transition validation.
+- [x] **Track (`POST /v1/trips/:id/pings`):** Needs optimization for batched arrays of pings for offline tolerance.
 
 ## 5. Architectural Proposal for Mobile Integration
 1. **Shared API Contracts:** Establish a clear OpenAPI/Swagger specification generated from the NestJS DTO decorators. This serves as the single source of truth for generating Flutter models and maintaining Next.js types.

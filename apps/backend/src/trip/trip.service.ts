@@ -84,6 +84,31 @@ export class TripService {
     });
   }
 
+  async addLocationPingBatch(tripId: string, pings: { latitude: number; longitude: number; accuracy?: number }[]) {
+    const trip = await this.prisma.trip.findUnique({
+      where: { id: tripId },
+    });
+
+    if (!trip) {
+      throw new NotFoundException('Trip not found');
+    }
+
+    if (trip.status === 'DELIVERED') {
+      throw new BadRequestException('Trip is already completed');
+    }
+
+    const pingData = pings.map((ping) => ({
+      tripId,
+      latitude: ping.latitude,
+      longitude: ping.longitude,
+      accuracy: ping.accuracy,
+    }));
+
+    return this.prisma.locationPing.createMany({
+      data: pingData,
+    });
+  }
+
   async submitPOD(data: {
     tripId: string;
     driverId: string;

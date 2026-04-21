@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { PrismaModule } from './prisma/prisma.module';
+import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { LoadModule } from './load/load.module';
 import { MatchingModule } from './matching/matching.module';
@@ -20,6 +21,7 @@ import { PrototypeAuthMiddleware } from './auth/prototype-auth.middleware';
       serveRoot: '/uploads',
     }),
     PrismaModule,
+    UserModule,
     AuthModule,
     LoadModule,
     MatchingModule,
