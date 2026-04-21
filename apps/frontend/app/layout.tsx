@@ -3,6 +3,8 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider } from "@/components/providers/session-provider";
+import { SplashProvider } from "@/components/providers/splash-provider";
+import { PerformanceProvider } from "@/components/providers/performance-context";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -14,8 +16,11 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Shipper Dashboard",
-  description: "Manage your intra-city loads and tracking",
+  title: "LogineX | Dashboard",
+  description: "Next Generation Logistics Platform",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
@@ -24,10 +29,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en" className="dark">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen selection:bg-primary/30`}>
         <SessionProvider>
-          {children}
+          <PerformanceProvider>
+            <SplashProvider>
+              {children}
+            </SplashProvider>
+          </PerformanceProvider>
         </SessionProvider>
         <Toaster />
       </body>
