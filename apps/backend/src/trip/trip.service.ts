@@ -84,7 +84,10 @@ export class TripService {
     });
   }
 
-  async addLocationPingBatch(tripId: string, pings: { latitude: number; longitude: number; accuracy?: number }[]) {
+  async addLocationPingBatch(
+    tripId: string,
+    pings: { latitude: number; longitude: number; accuracy?: number }[],
+  ) {
     const trip = await this.prisma.trip.findUnique({
       where: { id: tripId },
     });

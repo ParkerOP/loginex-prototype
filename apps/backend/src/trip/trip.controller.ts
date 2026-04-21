@@ -16,6 +16,8 @@ import { TripService } from './trip.service';
 import { UpdateTripStatusDto } from './dto/update-trip-status.dto';
 import { CreateLocationPingDto } from './dto/create-location-ping.dto';
 import { CreateLocationPingBatchDto } from './dto/create-location-ping-batch.dto';
+import { SubmitPodDto } from './dto/submit-pod.dto';
+import { SubmitRatingDto } from './dto/submit-rating.dto';
 
 @Controller('v1/trips')
 export class TripController {
@@ -51,7 +53,10 @@ export class TripController {
     @Param('id') id: string,
     @Body() createLocationPingBatchDto: CreateLocationPingBatchDto,
   ) {
-    return this.tripService.addLocationPingBatch(id, createLocationPingBatchDto.pings);
+    return this.tripService.addLocationPingBatch(
+      id,
+      createLocationPingBatchDto.pings,
+    );
   }
 
   @Get(':id/pings')
@@ -75,7 +80,7 @@ export class TripController {
   )
   async submitPOD(
     @Param('id') id: string,
-    @Body() body: { notes?: string; driverId: string },
+    @Body() submitPodDto: SubmitPodDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) {
@@ -86,22 +91,22 @@ export class TripController {
 
     return this.tripService.submitPOD({
       tripId: id,
-      driverId: body.driverId,
+      driverId: submitPodDto.driverId,
       imageUrl,
-      notes: body.notes,
+      notes: submitPodDto.notes,
     });
   }
 
   @Post(':id/rating')
   async submitRating(
     @Param('id') id: string,
-    @Body() body: { score: number; comment?: string; shipperId: string },
+    @Body() submitRatingDto: SubmitRatingDto,
   ) {
     return this.tripService.submitRating({
       tripId: id,
-      shipperId: body.shipperId,
-      score: body.score,
-      comment: body.comment,
+      shipperId: submitRatingDto.shipperId,
+      score: submitRatingDto.score,
+      comment: submitRatingDto.comment,
     });
   }
 

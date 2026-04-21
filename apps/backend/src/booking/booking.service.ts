@@ -20,7 +20,9 @@ export class BookingService {
     }
 
     if (load.status !== 'POSTED') {
-      throw new BadRequestException('Load is no longer available. Current status: ' + load.status);
+      throw new BadRequestException(
+        'Load is no longer available. Current status: ' + load.status,
+      );
     }
 
     // Check if the driver exists
@@ -38,7 +40,9 @@ export class BookingService {
     });
 
     if (existingBooking) {
-      throw new BadRequestException('Load has already been booked by another driver');
+      throw new BadRequestException(
+        'Load has already been booked by another driver',
+      );
     }
 
     // Wrap the booking and state change in a transaction

@@ -1,4 +1,11 @@
-import { Controller, Post, Body, Req, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Req,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateDeviceTokenDto } from './dto/create-device-token.dto';
 
