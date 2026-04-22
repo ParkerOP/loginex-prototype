@@ -6,6 +6,7 @@ import 'features/auth/domain/auth_state.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/driver/presentation/driver_dashboard.dart';
 import 'features/shipper/presentation/shipper_dashboard.dart';
+import 'features/splash/presentation/splash_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,15 +17,24 @@ void main() {
   runApp(const ProviderScope(child: LogineXApp()));
 }
 
-class LogineXApp extends ConsumerWidget {
+class LogineXApp extends ConsumerStatefulWidget {
   const LogineXApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LogineXApp> createState() => _LogineXAppState();
+}
+
+class _LogineXAppState extends ConsumerState<LogineXApp> {
+  bool _showSplash = true;
+
+  @override
+  Widget build(BuildContext context) {
     return MaterialApp(
       title: 'LogineX',
       theme: AppTheme.darkTheme, // Force dark theme for investor-ready look
-      home: const RootNavigator(),
+      home: _showSplash
+          ? SplashScreen(onComplete: () => setState(() => _showSplash = false))
+          : const RootNavigator(),
       debugShowCheckedModeBanner: false,
     );
   }

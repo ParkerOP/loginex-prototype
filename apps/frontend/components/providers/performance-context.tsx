@@ -20,6 +20,14 @@ export function PerformanceProvider({ children }: { children: React.ReactNode })
     const evaluatePerformance = () => {
       let lowEnd = false;
 
+      // Check if running locally to disable degradation
+      if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        setIsLowEnd(false);
+        setReduceMotion(false);
+        return;
+      }
+
+
       // Check for hardware concurrency (CPU cores)
       if (typeof navigator !== 'undefined') {
         const nav = navigator as unknown as { hardwareConcurrency?: number, connection?: { effectiveType: string, saveData: boolean, addEventListener: (type: string, listener: EventListener) => void, removeEventListener: (type: string, listener: EventListener) => void } };
