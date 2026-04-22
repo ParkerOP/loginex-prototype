@@ -2,7 +2,7 @@
 
 import { Bell, Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,12 +31,17 @@ export function Header() {
         <Bell className="h-4 w-4" />
         <span className="sr-only">Toggle notifications</span>
       </Button>
+
       <DropdownMenu>
-        <DropdownMenuTrigger >
-          <Button variant="secondary" size="icon" className="rounded-full">
-            <User className="h-5 w-5" />
-            <span className="sr-only">Toggle user menu</span>
-          </Button>
+        <DropdownMenuTrigger
+          className={buttonVariants({
+            variant: "secondary",
+            size: "icon",
+            className: "rounded-full",
+          })}
+        >
+          <User className="h-5 w-5" />
+          <span className="sr-only">Toggle user menu</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
