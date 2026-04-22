@@ -38,7 +38,7 @@ export default function LoadDetailsPage() {
     // 1. Fetch historical pings
     const fetchPings = async () => {
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/v1";
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1";
         const res = await fetch(`${baseUrl}/trips/${id}/pings`);
         if (res.ok) {
           const data = await res.json();
@@ -55,7 +55,7 @@ export default function LoadDetailsPage() {
     fetchPings();
 
     // 2. Setup WebSocket connection
-    const socketUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3000/v1/trips/tracking";
+    const socketUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3001/v1/trips/tracking";
     const newSocket = io(socketUrl);
 
 
