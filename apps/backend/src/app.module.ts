@@ -12,6 +12,7 @@ import { BookingModule } from './booking/booking.module';
 import { TripModule } from './trip/trip.module';
 import { BillingModule } from './billing/billing.module';
 import { DisputeModule } from './dispute/dispute.module';
+import { AdminModule } from './admin/admin.module';
 import { PrototypeAuthMiddleware } from './auth/prototype-auth.middleware';
 
 @Module({
@@ -29,6 +30,7 @@ import { PrototypeAuthMiddleware } from './auth/prototype-auth.middleware';
     TripModule,
     BillingModule,
     DisputeModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

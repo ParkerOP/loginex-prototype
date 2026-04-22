@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { BillingService } from '../billing/billing.service';
 import {
   Injectable,
@@ -15,6 +16,24 @@ const VALID_TRANSITIONS = {
 
 @Injectable()
 export class TripService {
+  private readonly logger = new Logger(TripService.name);
+
+  // Haversine formula to calculate distance between two coordinates in meters
+  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371e3; // Earth radius in meters
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
+  }
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly billingService: BillingService,
@@ -72,6 +91,26 @@ export class TripService {
 
     if (trip.status === 'DELIVERED') {
       throw new BadRequestException('Trip is already completed');
+    }
+
+
+    const lastPing = await this.prisma.locationPing.findFirst({
+      where: { tripId: data.tripId },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (lastPing) {
+      const distance = this.calculateDistance(lastPing.latitude, lastPing.longitude, data.latitude, data.longitude);
+      const timeDiffSeconds = (new Date().getTime() - lastPing.createdAt.getTime()) / 1000;
+
+      // If time diff is > 0 and speed is > 150 km/h (approx 41.6 m/s), flag as potential fraud (GPS spoofing)
+      if (timeDiffSeconds > 0) {
+         const speedMps = distance / timeDiffSeconds;
+         if (speedMps > 41.6) {
+             this.logger.warn(`FRAUD ALERT: Unrealistic speed detected for trip ${data.tripId}. Speed: ${(speedMps * 3.6).toFixed(2)} km/h`);
+             // In a real system, we might flag the trip or driver profile in the DB here
+         }
+      }
     }
 
     return this.prisma.locationPing.create({
