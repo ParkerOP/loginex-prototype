@@ -15,11 +15,7 @@ class AuthState {
     this.userId,
   });
 
-  AuthState copyWith({
-    bool? isAuthenticated,
-    UserRole? role,
-    String? userId,
-  }) {
+  AuthState copyWith({bool? isAuthenticated, UserRole? role, String? userId}) {
     return AuthState(
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       role: role ?? this.role,
@@ -43,14 +39,18 @@ class AuthNotifier extends Notifier<AuthState> {
     final roleStr = await _storage.read(key: 'x-user-role');
 
     if (userId != null && roleStr != null) {
-      final role = roleStr.toUpperCase() == 'DRIVER' ? UserRole.driver : UserRole.shipper;
+      final role = roleStr.toUpperCase() == 'DRIVER'
+          ? UserRole.driver
+          : UserRole.shipper;
       state = AuthState(isAuthenticated: true, role: role, userId: userId);
     }
   }
 
   Future<void> login(String phone, String roleStr) async {
     // For Prototype, just dummy auth
-    final role = roleStr.toUpperCase() == 'DRIVER' ? UserRole.driver : UserRole.shipper;
+    final role = roleStr.toUpperCase() == 'DRIVER'
+        ? UserRole.driver
+        : UserRole.shipper;
 
     // Create a dummy ID
     final dummyId = 'usr_${DateTime.now().millisecondsSinceEpoch}';

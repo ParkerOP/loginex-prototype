@@ -44,6 +44,11 @@ dependencies:
   rive: ^0.14.5
   web_socket_channel: ^3.0.3
   json_annotation: ^4.11.0
+  flutter_map: ^8.3.0
+  latlong2: ^0.9.1
+  connectivity_plus: ^7.1.1
+  device_info_plus: ^12.4.0
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:

@@ -12,8 +12,14 @@ class AppTheme {
         background: Color(0xFF0F172A),
       ),
       textTheme: const TextTheme(
-        displayLarge: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        displayMedium: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        displayLarge: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+        displayMedium: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
         bodyLarge: TextStyle(color: Colors.white),
         bodyMedium: TextStyle(color: Colors.white70),
       ),
