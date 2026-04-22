@@ -51,7 +51,11 @@ class _TripExecutionScreenState extends State<TripExecutionScreen> {
               shape: BoxShape.circle,
               color: Colors.green.withOpacity(0.2),
             ),
-            child: const Icon(Icons.check_circle, color: Colors.green, size: 80),
+            child: const Icon(
+              Icons.check_circle,
+              color: Colors.green,
+              size: 80,
+            ),
           ).animate().scale(duration: 500.ms, curve: Curves.easeOutBack),
           const SizedBox(height: 24),
           Text(
@@ -61,7 +65,10 @@ class _TripExecutionScreenState extends State<TripExecutionScreen> {
           const SizedBox(height: 12),
           Text(
             'Earnings added to your wallet',
-            style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 16),
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 16,
+            ),
           ).animate().fadeIn(delay: 400.ms),
         ],
       ),
@@ -85,9 +92,16 @@ class _TripExecutionScreenState extends State<TripExecutionScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.map, size: 64, color: Colors.white.withOpacity(0.2)),
+                  Icon(
+                    Icons.map,
+                    size: 64,
+                    color: Colors.white.withOpacity(0.2),
+                  ),
                   const SizedBox(height: 16),
-                  Text('Live Map View', style: TextStyle(color: Colors.white.withOpacity(0.5))),
+                  Text(
+                    'Live Map View',
+                    style: TextStyle(color: Colors.white.withOpacity(0.5)),
+                  ),
                 ],
               ),
             ),
@@ -101,7 +115,9 @@ class _TripExecutionScreenState extends State<TripExecutionScreen> {
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(32),
+              ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.5),
@@ -115,15 +131,39 @@ class _TripExecutionScreenState extends State<TripExecutionScreen> {
               children: [
                 Text(
                   'Trip to ${widget.load['destination']}',
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 32),
 
                 // Custom Stepper
-                _buildStep(0, 'En Route to Pickup', isActive: _currentStep >= 0, isDone: _currentStep > 0),
-                _buildStep(1, 'Arrived at Pickup', isActive: _currentStep >= 1, isDone: _currentStep > 1),
-                _buildStep(2, 'In Transit', isActive: _currentStep >= 2, isDone: _currentStep > 2),
-                _buildStep(3, 'Arrived at Drop-off', isActive: _currentStep >= 3, isDone: false, isLast: true),
+                _buildStep(
+                  0,
+                  'En Route to Pickup',
+                  isActive: _currentStep >= 0,
+                  isDone: _currentStep > 0,
+                ),
+                _buildStep(
+                  1,
+                  'Arrived at Pickup',
+                  isActive: _currentStep >= 1,
+                  isDone: _currentStep > 1,
+                ),
+                _buildStep(
+                  2,
+                  'In Transit',
+                  isActive: _currentStep >= 2,
+                  isDone: _currentStep > 2,
+                ),
+                _buildStep(
+                  3,
+                  'Arrived at Drop-off',
+                  isActive: _currentStep >= 3,
+                  isDone: false,
+                  isLast: true,
+                ),
 
                 const Spacer(),
 
@@ -148,7 +188,13 @@ class _TripExecutionScreenState extends State<TripExecutionScreen> {
     );
   }
 
-  Widget _buildStep(int index, String title, {required bool isActive, required bool isDone, bool isLast = false}) {
+  Widget _buildStep(
+    int index,
+    String title, {
+    required bool isActive,
+    required bool isDone,
+    bool isLast = false,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -160,13 +206,19 @@ class _TripExecutionScreenState extends State<TripExecutionScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isDone
-                  ? Colors.green
-                  : isActive ? Theme.of(context).colorScheme.primary : Colors.white.withOpacity(0.1),
+                    ? Colors.green
+                    : isActive
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.white.withOpacity(0.1),
                 border: Border.all(
-                  color: isActive ? Colors.transparent : Colors.white.withOpacity(0.3),
+                  color: isActive
+                      ? Colors.transparent
+                      : Colors.white.withOpacity(0.3),
                 ),
               ),
-              child: isDone ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
+              child: isDone
+                  ? const Icon(Icons.check, size: 16, color: Colors.white)
+                  : null,
             ),
             if (!isLast)
               Container(

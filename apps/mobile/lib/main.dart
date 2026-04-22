@@ -13,11 +13,7 @@ void main() {
   // Configure default animation duration for flutter_animate
   Animate.defaultDuration = const Duration(milliseconds: 600);
 
-  runApp(
-    const ProviderScope(
-      child: LogineXApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: LogineXApp()));
 }
 
 class LogineXApp extends ConsumerWidget {
@@ -47,13 +43,16 @@ class RootNavigator extends ConsumerWidget {
         return FadeTransition(
           opacity: animation,
           child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.1),
-              end: Offset.zero,
-            ).animate(CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutCubic,
-            )),
+            position:
+                Tween<Offset>(
+                  begin: const Offset(0, 0.1),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
             child: child,
           ),
         );
