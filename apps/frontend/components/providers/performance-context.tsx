@@ -5,11 +5,13 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 interface PerformanceContextType {
   isLowEnd: boolean;
   reduceMotion: boolean;
+  setReduceMotion: (val: boolean) => void;
 }
 
 const PerformanceContext = createContext<PerformanceContextType>({
   isLowEnd: false,
   reduceMotion: false,
+  setReduceMotion: () => {},
 });
 
 export function PerformanceProvider({
@@ -145,7 +147,7 @@ export function PerformanceProvider({
   }, []);
 
   return (
-    <PerformanceContext.Provider value={{ isLowEnd, reduceMotion }}>
+    <PerformanceContext.Provider value={{ isLowEnd, reduceMotion, setReduceMotion }}>
       {children}
     </PerformanceContext.Provider>
   );

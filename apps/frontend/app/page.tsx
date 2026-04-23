@@ -19,10 +19,11 @@ import {
   Plus,
   LogOut,
   ArrowUpRight,
+  Search,
 } from "lucide-react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { getLoadsForShipper, Load } from "../lib/api/loads";
+import { getLoadsForShipper, getAvailableLoads, Load } from "../lib/api/loads";
 import { motion, AnimatePresence } from "framer-motion";
 import { BackgroundGradient } from "@/components/ui/magic/BackgroundGradient";
 import { usePerformance } from "@/components/providers/performance-context";
@@ -60,13 +61,22 @@ export default function Home() {
   }, [status, router]);
 
   useEffect(() => {
-    if (session?.user?.id) {
-      getLoadsForShipper(session.user.id)
-        .then((data) => {
-          setLoads(data || []);
-        })
-        .catch((err) => console.error("Failed to fetch loads", err))
-        .finally(() => setLoading(false));
+    if (session?.user?.id && (session?.user as any)?.role) {
+      if ((session.user as any).role === "SHIPPER") {
+        getLoadsForShipper(session.user.id)
+          .then((data) => {
+            setLoads(data || []);
+          })
+          .catch((err) => console.error("Failed to fetch shipper loads", err))
+          .finally(() => setLoading(false));
+      } else if ((session.user as any).role === "DRIVER") {
+        getAvailableLoads()
+          .then((data) => {
+            setLoads(data || []);
+          })
+          .catch((err) => console.error("Failed to fetch available loads", err))
+          .finally(() => setLoading(false));
+      }
     }
   }, [session]);
 
@@ -125,7 +135,7 @@ export default function Home() {
           <p className="text-muted-foreground mt-1 text-lg">
             Welcome back,{" "}
             <span className="font-semibold text-foreground">
-              {session?.user?.name || "Shipper"}
+              {session?.user?.name || ((session?.user as any)?.role === "DRIVER" ? "Driver" : "Shipper")}
             </span>
           </p>
         </div>
@@ -133,16 +143,50 @@ export default function Home() {
           <Button variant="outline" className="glass" onClick={() => signOut()}>
             <LogOut className="mr-2 h-4 w-4" /> Sign Out
           </Button>
-          <Link href="/loads/new" passHref>
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95">
-              <Plus className="mr-2 h-4 w-4" /> Post New Load
-            </Button>
-          </Link>
+          {(session?.user as any)?.role === "SHIPPER" && (
+            <Link href="/loads/new" passHref>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95">
+                <Plus className="mr-2 h-4 w-4" /> Post New Load
+              </Button>
+            </Link>
+          )}
+          {(session?.user as any)?.role === "DRIVER" && (
+            <Link href="/find-loads" passHref>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95">
+                <Search className="mr-2 h-4 w-4" /> Find Loads
+              </Button>
+            </Link>
+          )}
         </div>
       </motion.div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {[
+        {((session?.user as any)?.role === "DRIVER" ? [
+          {
+            title: "Available Loads",
+            value: loads.length,
+            icon: Search,
+            desc: "Ready to pick up",
+            color: "text-blue-500",
+            bg: "bg-blue-500/10",
+          },
+          {
+            title: "Active Trips",
+            value: 0, // Mock for now
+            icon: Truck,
+            desc: "Currently driving",
+            color: "text-amber-500",
+            bg: "bg-amber-500/10",
+          },
+          {
+            title: "Completed Trips",
+            value: 0, // Mock for now
+            icon: Activity,
+            desc: "Total delivered",
+            color: "text-green-500",
+            bg: "bg-green-500/10",
+          },
+        ] : [
           {
             title: "Active Loads",
             value: activeLoads,
@@ -167,7 +211,7 @@ export default function Home() {
             color: "text-green-500",
             bg: "bg-green-500/10",
           },
-        ].map((stat, i) => (
+        ]).map((stat, i) => (
           <motion.div
             key={i}
             variants={reduceMotion ? {} : itemVariants}
