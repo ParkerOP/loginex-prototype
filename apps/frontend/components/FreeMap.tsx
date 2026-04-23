@@ -83,22 +83,10 @@ const RoutingMachine = ({ pickup, dropoff }: { pickup: string, dropoff: string }
 
 export default function FreeMap({ pickup, dropoff }: FreeMapProps) {
   const defaultCenter: L.LatLngExpression = [28.6139, 77.2090]; // New Delhi
-  const mapRef = useRef<L.Map | null>(null);
-
-  // Cleanup map instance on unmount to prevent "Map container is already initialized"
-  useEffect(() => {
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
-  }, []);
 
   return (
     <div style={{ height: "100%", width: "100%", minHeight: "400px" }}>
       <MapContainer
-        ref={mapRef}
         center={defaultCenter}
         zoom={10}
         scrollWheelZoom={true}
