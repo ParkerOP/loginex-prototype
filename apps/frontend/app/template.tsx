@@ -10,16 +10,24 @@ export default function Template({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { reduceMotion } = usePerformance();
 
-  if (pathname === '/login') {
+  if (pathname === "/login") {
     return (
       <AnimatePresence mode="wait">
         <motion.div
-           key={pathname}
-           initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98, filter: "blur(5px)" }}
-           animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-           exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 1.02, filter: "blur(5px)" }}
-           transition={{ duration: 0.5, ease: "easeInOut" }}
-           className="min-h-screen"
+          key={pathname}
+          initial={
+            reduceMotion
+              ? { opacity: 0 }
+              : { opacity: 0, scale: 0.98, filter: "blur(5px)" }
+          }
+          animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+          exit={
+            reduceMotion
+              ? { opacity: 0 }
+              : { opacity: 0, scale: 1.02, filter: "blur(5px)" }
+          }
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          className="min-h-screen"
         >
           {children}
         </motion.div>
@@ -32,8 +40,8 @@ export default function Template({ children }: { children: React.ReactNode }) {
       {/* Dynamic Background Noise/Glow */}
       {!reduceMotion && (
         <div className="pointer-events-none fixed inset-0 z-[-1] flex justify-center opacity-30">
-           <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/20 blur-[120px]" />
-           <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-accent/20 blur-[120px]" />
+          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/20 blur-[120px]" />
+          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-accent/20 blur-[120px]" />
         </div>
       )}
 

@@ -45,7 +45,9 @@ export class AdminService {
     return this.prisma.load.findMany({
       include: {
         shipper: { include: { user: true } },
-        booking: { include: { driver: { include: { user: true } }, trip: true } },
+        booking: {
+          include: { driver: { include: { user: true } }, trip: true },
+        },
       },
       orderBy: { createdAt: 'desc' },
       take: 50,
@@ -124,7 +126,7 @@ export class AdminService {
     this.logger.log(`Match suggested for Load ${load.id}.`);
 
     // 5. Driver Accepts / Booking Created
-    const { booking, trip } = await this.bookingService.acceptLoad({
+    const { trip } = await this.bookingService.acceptLoad({
       loadId: load.id,
       driverId: driverUser.driverProfile!.id,
     });
@@ -147,15 +149,17 @@ export class AdminService {
     this.logger.log(`Trip ${trip.id} is in transit. Initial ping recorded.`);
 
     // Wait a tiny bit then send a second ping very far away to trigger the fraud alert logic for demonstration
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     await this.tripService.addLocationPing({
       tripId: trip.id,
-      latitude: 19.0760, // Mumbai (approx 120km away)
+      latitude: 19.076, // Mumbai (approx 120km away)
       longitude: 72.8777,
       accuracy: 10,
     });
-    this.logger.log(`Trip ${trip.id} second ping recorded. Fraud flag should have triggered.`);
+    this.logger.log(
+      `Trip ${trip.id} second ping recorded. Fraud flag should have triggered.`,
+    );
 
     // 7. Arrive & Deliver
     await this.tripService.updateTripStatus({
@@ -165,7 +169,7 @@ export class AdminService {
     });
     this.logger.log(`Trip ${trip.id} arrived.`);
 
-    const pod = await this.tripService.submitPOD({
+    await this.tripService.submitPOD({
       tripId: trip.id,
       driverId: driverUser.driverProfile!.id,
       imageUrl: 'https://via.placeholder.com/150',

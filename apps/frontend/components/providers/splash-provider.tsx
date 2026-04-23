@@ -14,7 +14,7 @@ export function SplashProvider({ children }: { children: React.ReactNode }) {
         style={{
           opacity: showSplash ? 0 : 1,
           transition: "opacity 0.8s ease-in-out",
-          pointerEvents: showSplash ? "none" : "auto"
+          pointerEvents: showSplash ? "none" : "auto",
         }}
         className="h-full w-full"
       >

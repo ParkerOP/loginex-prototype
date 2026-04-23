@@ -14,7 +14,13 @@ interface FreeMapProps {
   dropoff: string;
 }
 
-const RoutingMachine = ({ pickup, dropoff }: { pickup: string, dropoff: string }) => {
+const RoutingMachine = ({
+  pickup,
+  dropoff,
+}: {
+  pickup: string;
+  dropoff: string;
+}) => {
   const map = useMap();
   const routingControlRef = useRef<L.Routing.Control | null>(null);
 
@@ -29,7 +35,9 @@ const RoutingMachine = ({ pickup, dropoff }: { pickup: string, dropoff: string }
 
     const geocode = async (address: string) => {
       try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`,
+        );
         const data = await response.json();
         if (data && data.length > 0) {
           return L.latLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
@@ -54,7 +62,7 @@ const RoutingMachine = ({ pickup, dropoff }: { pickup: string, dropoff: string }
           lineOptions: {
             styles: [{ color: "#6366F1", weight: 4 }],
             extendToWaypoints: true,
-            missingRouteTolerance: 0
+            missingRouteTolerance: 0,
           },
           show: false,
           addWaypoints: false,
@@ -70,9 +78,9 @@ const RoutingMachine = ({ pickup, dropoff }: { pickup: string, dropoff: string }
     return () => {
       if (routingControlRef.current) {
         try {
-            map.removeControl(routingControlRef.current);
+          map.removeControl(routingControlRef.current);
         } catch (e) {
-            console.error(e)
+          console.error(e);
         }
       }
     };
@@ -82,18 +90,8 @@ const RoutingMachine = ({ pickup, dropoff }: { pickup: string, dropoff: string }
 };
 
 export default function FreeMap({ pickup, dropoff }: FreeMapProps) {
-  const defaultCenter: L.LatLngExpression = [28.6139, 77.2090]; // New Delhi
+  const defaultCenter: L.LatLngExpression = [28.6139, 77.209]; // New Delhi
   const mapRef = useRef<L.Map | null>(null);
-
-  // Cleanup map instance on unmount to prevent "Map container is already initialized"
-  useEffect(() => {
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
-  }, []);
 
   return (
     <div style={{ height: "100%", width: "100%", minHeight: "400px" }}>
