@@ -9,4 +9,9 @@ export class BillingController {
   async getInvoices(@Param('shipperId') shipperId: string) {
     return this.billingService.getInvoicesForShipper(shipperId);
   }
+
+  @Get('earnings/:driverId')
+  async getEarnings(@Param('driverId') driverId: string) {
+    return this.billingService.getEarningsForDriver(driverId);
+  }
 }

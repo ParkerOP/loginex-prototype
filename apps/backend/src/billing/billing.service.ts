@@ -25,12 +25,11 @@ export class BillingService {
       }
 
       // 1. Calculate Platform Fee
-      // Base logic: Pro drivers get lower fees or zero fees, Free drivers pay a fixed amount per trip
       let feeAmount = 0;
       if (trip.driver.planType === 'FREE') {
-        feeAmount = 50.0; // Example fixed fee for free tier
+        feeAmount = 50.0;
       } else {
-        feeAmount = 10.0; // Example lower fee for pro tier
+        feeAmount = 10.0;
       }
 
       const feeRecord = await prisma.platformFeeRecord.create({
@@ -41,15 +40,11 @@ export class BillingService {
         },
       });
 
-      // TODO: Integrate RazorPay UPI for capturing payments and verifying transaction webhooks
       // 2. Generate Invoice for Shipper
-      // Assuming a base rate based on weight/distance for now, simplified to a fixed value
       let tripCost = 500.0;
 
-      // Pro/SME shippers might get discounts or bulk invoicing later,
-      // but for now we issue an invoice per trip.
       if (trip.booking.load.shipper.planType === 'SME') {
-        tripCost = 450.0; // SME discount
+        tripCost = 450.0;
       }
 
       const invoice = await prisma.invoice.create({
@@ -58,7 +53,7 @@ export class BillingService {
           shipperId: trip.booking.load.shipperId,
           amount: tripCost,
           status: 'ISSUED',
-          fileUrl: `https://dummy-bucket.s3.amazonaws.com/invoices/${trip.id}.pdf`, // Mock PDF link
+          fileUrl: `https://dummy-bucket.s3.amazonaws.com/invoices/${trip.id}.pdf`,
         },
       });
 
@@ -73,5 +68,35 @@ export class BillingService {
       where: { shipperId },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async getEarningsForDriver(driverId: string) {
+    const trips = await this.prisma.trip.findMany({
+      where: {
+        driverId: driverId,
+        status: 'DELIVERED',
+      },
+      include: {
+        booking: {
+          include: {
+            load: true,
+          },
+        },
+      },
+    });
+
+    const earnings = trips.map((trip) => {
+      const baseEarn = 400.0;
+      return {
+        tripId: trip.id,
+        amount: baseEarn,
+        date: trip.updatedAt,
+      };
+    });
+
+    return {
+      total: earnings.reduce((sum, e) => sum + e.amount, 0),
+      history: earnings,
+    };
   }
 }

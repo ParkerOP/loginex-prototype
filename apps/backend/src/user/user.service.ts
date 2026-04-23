@@ -25,4 +25,29 @@ export class UserService {
 
     return deviceToken;
   }
+
+  async getUserProfile(userId: string) {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        phone: true,
+        role: true,
+        shipperProfile: true,
+        driverProfile: true,
+      },
+    });
+  }
+
+  async getDrivers() {
+    return this.prisma.user.findMany({
+      where: { role: 'DRIVER' },
+      select: {
+        id: true,
+        phone: true,
+        role: true,
+        driverProfile: true,
+      },
+    });
+  }
 }
