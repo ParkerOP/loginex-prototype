@@ -13,6 +13,57 @@ export class MatchingService {
     private readonly loadService: LoadService,
   ) {}
 
+  private async resolveDriverProfileId(driverIdOrUserId: string) {
+    const byProfileId = await this.prisma.driverProfile.findUnique({
+      where: { id: driverIdOrUserId },
+      select: { id: true },
+    });
+    if (byProfileId) {
+      return byProfileId.id;
+    }
+
+    const byUserId = await this.prisma.driverProfile.findUnique({
+      where: { userId: driverIdOrUserId },
+      select: { id: true },
+    });
+    if (byUserId) {
+      return byUserId.id;
+    }
+
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id: driverIdOrUserId },
+      select: { id: true, role: true },
+    });
+
+    if (!existingUser) {
+      await this.prisma.user.create({
+        data: {
+          id: driverIdOrUserId,
+          role: 'DRIVER',
+          phone: `proto-driver-${driverIdOrUserId}`,
+        },
+      });
+    } else if (existingUser.role !== 'DRIVER') {
+      await this.prisma.user.update({
+        where: { id: driverIdOrUserId },
+        data: { role: 'DRIVER' },
+      });
+    }
+
+    const createdProfile = await this.prisma.driverProfile.upsert({
+      where: { userId: driverIdOrUserId },
+      update: {},
+      create: {
+        userId: driverIdOrUserId,
+        name: 'Prototype Driver',
+        licenseNumber: `SIM-${driverIdOrUserId.slice(0, 10)}`,
+      },
+      select: { id: true },
+    });
+
+    return createdProfile.id;
+  }
+
   // ... previous logic
   async getAvailableMatchesForDriver(
     driverId: string,
@@ -21,8 +72,13 @@ export class MatchingService {
     city?: string,
     vehicleType?: string,
   ) {
+    const driverProfileId = await this.resolveDriverProfileId(driverId);
+    if (!driverProfileId) {
+      throw new NotFoundException('Driver not found');
+    }
+
     const driver = await this.prisma.driverProfile.findUnique({
-      where: { id: driverId },
+      where: { id: driverProfileId },
       include: { vehicles: true },
     });
 
@@ -104,8 +160,13 @@ export class MatchingService {
       throw new BadRequestException('Load is no longer available');
     }
 
+    const driverProfileId = await this.resolveDriverProfileId(driverId);
+    if (!driverProfileId) {
+      throw new NotFoundException('Driver not found');
+    }
+
     const driver = await this.prisma.driverProfile.findUnique({
-      where: { id: driverId },
+      where: { id: driverProfileId },
       include: { vehicles: true },
     });
 
@@ -129,7 +190,7 @@ export class MatchingService {
       where: {
         loadId_driverId: {
           loadId,
-          driverId,
+          driverId: driverProfileId,
         },
       },
     });
@@ -143,7 +204,7 @@ export class MatchingService {
     return this.prisma.matchSuggestion.create({
       data: {
         loadId,
-        driverId,
+        driverId: driverProfileId,
         score,
         status: 'OFFERED',
       },

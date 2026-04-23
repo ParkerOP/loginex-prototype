@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { fetchApi } from "@/lib/api/client";
 
 import io from "socket.io-client";
 import dynamic from "next/dynamic";
@@ -50,20 +51,24 @@ export default function LoadDetailsPage() {
   const id = params.id as string;
 
   const [pings, setPings] = useState<LocationPing[]>([]);
+  const [tripId, setTripId] = useState<string | null>(null);
   const [currentLocation, setCurrentLocation] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
 
   useEffect(() => {
-    // 1. Fetch historical pings
-    const fetchPings = async () => {
+    const fetchLoadAndPings = async () => {
       try {
-        const baseUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1";
-        const res = await fetch(`${baseUrl}/trips/${id}/pings`);
-        if (res.ok) {
-          const data = await res.json();
+        const load = await fetchApi(`/loads/${id}`);
+        const resolvedTripId = load?.booking?.trip?.id ?? null;
+        setTripId(resolvedTripId);
+        if (!resolvedTripId) {
+          return;
+        }
+
+        const data = await fetchApi(`/trips/${resolvedTripId}/pings`);
+        if (data) {
           setPings(data);
           if (data.length > 0) {
             const last = data[data.length - 1];
@@ -71,19 +76,24 @@ export default function LoadDetailsPage() {
           }
         }
       } catch (err) {
-        console.error("Failed to fetch historical pings", err);
+        console.error("Failed to fetch load tracking data", err);
       }
     };
-    fetchPings();
+    fetchLoadAndPings();
+  }, [id]);
 
-    // 2. Setup WebSocket connection
+  useEffect(() => {
+    if (!tripId) {
+      return;
+    }
+
     const socketUrl =
       process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3001/v1/trips/tracking";
     const newSocket = io(socketUrl);
 
     newSocket.on("connect", () => {
       console.log("Connected to websocket");
-      newSocket.emit("joinTrip", { tripId: id });
+      newSocket.emit("joinTrip", { tripId });
     });
 
     newSocket.on("locationUpdate", (ping: LocationPing) => {
@@ -95,7 +105,7 @@ export default function LoadDetailsPage() {
     return () => {
       newSocket.disconnect();
     };
-  }, [id]);
+  }, [tripId]);
 
   return (
     <div className="flex flex-col gap-6">

@@ -19,7 +19,7 @@ import { CreateLocationPingBatchDto } from './dto/create-location-ping-batch.dto
 import { SubmitPodDto } from './dto/submit-pod.dto';
 import { SubmitRatingDto } from './dto/submit-rating.dto';
 
-@Controller('v1/trips')
+@Controller('trips')
 export class TripController {
   constructor(private readonly tripService: TripService) {}
 

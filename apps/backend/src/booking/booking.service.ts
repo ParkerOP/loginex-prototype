@@ -9,6 +9,58 @@ import { PrismaService } from '../prisma/prisma.service';
 export class BookingService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async resolveDriverProfileId(driverIdOrUserId: string) {
+    const byProfileId = await this.prisma.driverProfile.findUnique({
+      where: { id: driverIdOrUserId },
+      select: { id: true },
+    });
+    if (byProfileId) {
+      return byProfileId.id;
+    }
+
+    const byUserId = await this.prisma.driverProfile.findUnique({
+      where: { userId: driverIdOrUserId },
+      select: { id: true },
+    });
+    if (byUserId) {
+      return byUserId.id;
+    }
+
+    // Prototype-friendly fallback: auto-provision driver user/profile by user id.
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id: driverIdOrUserId },
+      select: { id: true, role: true },
+    });
+
+    if (!existingUser) {
+      await this.prisma.user.create({
+        data: {
+          id: driverIdOrUserId,
+          role: 'DRIVER',
+          phone: `proto-driver-${driverIdOrUserId}`,
+        },
+      });
+    } else if (existingUser.role !== 'DRIVER') {
+      await this.prisma.user.update({
+        where: { id: driverIdOrUserId },
+        data: { role: 'DRIVER' },
+      });
+    }
+
+    const createdProfile = await this.prisma.driverProfile.upsert({
+      where: { userId: driverIdOrUserId },
+      update: {},
+      create: {
+        userId: driverIdOrUserId,
+        name: 'Prototype Driver',
+        licenseNumber: `SIM-${driverIdOrUserId.slice(0, 10)}`,
+      },
+      select: { id: true },
+    });
+
+    return createdProfile.id;
+  }
+
   async acceptLoad(data: { loadId: string; driverId: string }) {
     // Check if the load is available
     const load = await this.prisma.load.findUnique({
@@ -26,11 +78,8 @@ export class BookingService {
     }
 
     // Check if the driver exists
-    const driver = await this.prisma.driverProfile.findUnique({
-      where: { id: data.driverId },
-    });
-
-    if (!driver) {
+    const driverProfileId = await this.resolveDriverProfileId(data.driverId);
+    if (!driverProfileId) {
       throw new NotFoundException('Driver profile not found');
     }
 
@@ -51,7 +100,7 @@ export class BookingService {
       const booking = await prisma.booking.create({
         data: {
           loadId: data.loadId,
-          driverId: data.driverId,
+          driverId: driverProfileId,
           status: 'CONFIRMED',
         },
       });
@@ -66,7 +115,7 @@ export class BookingService {
       const trip = await prisma.trip.create({
         data: {
           bookingId: booking.id,
-          driverId: data.driverId,
+          driverId: driverProfileId,
           status: 'STARTED', // Ensure the trip starts in STARTED state
         },
       });

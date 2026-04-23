@@ -44,11 +44,67 @@ export class TripService {
     private readonly billingService: BillingService,
   ) {}
 
+  private async resolveDriverProfileId(driverIdOrUserId: string) {
+    const byProfileId = await this.prisma.driverProfile.findUnique({
+      where: { id: driverIdOrUserId },
+      select: { id: true },
+    });
+    if (byProfileId) {
+      return byProfileId.id;
+    }
+
+    const byUserId = await this.prisma.driverProfile.findUnique({
+      where: { userId: driverIdOrUserId },
+      select: { id: true },
+    });
+    if (byUserId) {
+      return byUserId.id;
+    }
+
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id: driverIdOrUserId },
+      select: { id: true, role: true },
+    });
+
+    if (!existingUser) {
+      await this.prisma.user.create({
+        data: {
+          id: driverIdOrUserId,
+          role: 'DRIVER',
+          phone: `proto-driver-${driverIdOrUserId}`,
+        },
+      });
+    } else if (existingUser.role !== 'DRIVER') {
+      await this.prisma.user.update({
+        where: { id: driverIdOrUserId },
+        data: { role: 'DRIVER' },
+      });
+    }
+
+    const createdProfile = await this.prisma.driverProfile.upsert({
+      where: { userId: driverIdOrUserId },
+      update: {},
+      create: {
+        userId: driverIdOrUserId,
+        name: 'Prototype Driver',
+        licenseNumber: `SIM-${driverIdOrUserId.slice(0, 10)}`,
+      },
+      select: { id: true },
+    });
+
+    return createdProfile.id;
+  }
+
   async updateTripStatus(data: {
     tripId: string;
     driverId: string;
     status: string;
   }) {
+    const driverProfileId = await this.resolveDriverProfileId(data.driverId);
+    if (!driverProfileId) {
+      throw new BadRequestException('Driver not authorized for this trip');
+    }
+
     const trip = await this.prisma.trip.findUnique({
       where: { id: data.tripId },
     });
@@ -57,7 +113,7 @@ export class TripService {
       throw new NotFoundException('Trip not found');
     }
 
-    if (trip.driverId !== data.driverId) {
+    if (trip.driverId !== driverProfileId) {
       throw new BadRequestException('Driver not authorized for this trip');
     }
 
@@ -169,6 +225,11 @@ export class TripService {
     imageUrl: string;
     notes?: string;
   }) {
+    const driverProfileId = await this.resolveDriverProfileId(data.driverId);
+    if (!driverProfileId) {
+      throw new BadRequestException('Driver not authorized for this trip');
+    }
+
     const trip = await this.prisma.trip.findUnique({
       where: { id: data.tripId },
     });
@@ -177,7 +238,7 @@ export class TripService {
       throw new NotFoundException('Trip not found');
     }
 
-    if (trip.driverId !== data.driverId) {
+    if (trip.driverId !== driverProfileId) {
       throw new BadRequestException('Driver not authorized for this trip');
     }
 
@@ -265,8 +326,13 @@ export class TripService {
   }
 
   async getTripsByDriver(driverId: string) {
+    const driverProfileId = await this.resolveDriverProfileId(driverId);
+    if (!driverProfileId) {
+      return [];
+    }
+
     return this.prisma.trip.findMany({
-      where: { driverId },
+      where: { driverId: driverProfileId },
       include: {
         booking: {
           include: {

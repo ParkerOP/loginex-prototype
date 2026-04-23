@@ -6,16 +6,19 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, ArrowRight, Package, Clock, ShieldCheck } from "lucide-react";
+import { ArrowRight, Package, Clock, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getAvailableLoads, Load } from "@/lib/api/loads";
 import { usePerformance } from "@/components/providers/performance-context";
+import { acceptLoad } from "@/lib/api/bookings";
+import { toast } from "sonner";
 
 export default function FindLoadsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [loads, setLoads] = useState<Load[]>([]);
   const [loading, setLoading] = useState(true);
+  const [acceptingLoadId, setAcceptingLoadId] = useState<string | null>(null);
   const { reduceMotion } = usePerformance();
 
   useEffect(() => {
@@ -28,7 +31,7 @@ export default function FindLoadsPage() {
 
   useEffect(() => {
     if (session?.user?.id && (session?.user as any)?.role === "DRIVER") {
-      getAvailableLoads()
+      getAvailableLoads(session)
         .then((data) => {
           setLoads(data || []);
         })
@@ -36,6 +39,23 @@ export default function FindLoadsPage() {
         .finally(() => setLoading(false));
     }
   }, [session]);
+
+  const handleAcceptLoad = async (loadId: string) => {
+    if (!session?.user?.id) {
+      return;
+    }
+
+    try {
+      setAcceptingLoadId(loadId);
+      await acceptLoad(loadId, session.user.id, session);
+      setLoads((prev) => prev.filter((load) => load.id !== loadId));
+      toast.success("Load accepted and trip started");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to accept load");
+    } finally {
+      setAcceptingLoadId(null);
+    }
+  };
 
   if (status === "loading" || status === "unauthenticated" || (session?.user as any)?.role !== "DRIVER") {
     return (
@@ -146,7 +166,11 @@ export default function FindLoadsPage() {
                       </div>
                     </div>
 
-                    <Button className="w-full mt-4 group">
+                    <Button
+                      className="w-full mt-4 group"
+                      onClick={() => handleAcceptLoad(load.id)}
+                      disabled={acceptingLoadId === load.id}
+                    >
                       Accept Load <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </Button>
                   </CardContent>

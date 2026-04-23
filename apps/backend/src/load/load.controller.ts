@@ -2,7 +2,7 @@ import { Controller, Post, Body, Get, Param } from '@nestjs/common';
 import { LoadService } from './load.service';
 import { CreateLoadDto } from './dto/create-load.dto';
 
-@Controller('v1/loads')
+@Controller('loads')
 export class LoadController {
   constructor(private readonly loadService: LoadService) {}
 

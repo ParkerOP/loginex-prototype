@@ -10,7 +10,7 @@ import { MatchingService } from './matching.service';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SuggestMatchDto } from './dto/suggest-match.dto';
 
-@Controller('v1/matches')
+@Controller('matches')
 export class MatchingController {
   constructor(private readonly matchingService: MatchingService) {}
 

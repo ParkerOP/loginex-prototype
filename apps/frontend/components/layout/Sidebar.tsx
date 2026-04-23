@@ -11,6 +11,7 @@ import {
   Settings,
   Search,
   MapPin,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,7 @@ const shipperItems = [
   { name: "My Loads", href: "/loads", icon: Package },
   { name: "Drivers", href: "/drivers", icon: Truck },
   { name: "Billing", href: "/billing", icon: CreditCard },
+  { name: "Admin", href: "/admin", icon: ShieldCheck },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
@@ -27,6 +29,7 @@ const driverItems = [
   { name: "Find Loads", href: "/find-loads", icon: Search },
   { name: "My Trips", href: "/my-trips", icon: MapPin },
   { name: "Earnings", href: "/earnings", icon: CreditCard },
+  { name: "Admin", href: "/admin", icon: ShieldCheck },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 

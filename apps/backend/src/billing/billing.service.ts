@@ -7,6 +7,108 @@ export class BillingService {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  private async resolveShipperProfileId(shipperIdOrUserId: string) {
+    const byProfileId = await this.prisma.shipperProfile.findUnique({
+      where: { id: shipperIdOrUserId },
+      select: { id: true },
+    });
+    if (byProfileId) {
+      return byProfileId.id;
+    }
+
+    const byUserId = await this.prisma.shipperProfile.findUnique({
+      where: { userId: shipperIdOrUserId },
+      select: { id: true },
+    });
+    if (byUserId) {
+      return byUserId.id;
+    }
+
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id: shipperIdOrUserId },
+      select: { id: true, role: true },
+    });
+
+    if (!existingUser) {
+      await this.prisma.user.create({
+        data: {
+          id: shipperIdOrUserId,
+          role: 'SHIPPER',
+          phone: `proto-shipper-${shipperIdOrUserId}`,
+        },
+      });
+    } else if (existingUser.role !== 'SHIPPER') {
+      await this.prisma.user.update({
+        where: { id: shipperIdOrUserId },
+        data: { role: 'SHIPPER' },
+      });
+    }
+
+    const createdProfile = await this.prisma.shipperProfile.upsert({
+      where: { userId: shipperIdOrUserId },
+      update: {},
+      create: {
+        userId: shipperIdOrUserId,
+        name: 'Prototype Shipper',
+        planType: 'SME',
+      },
+      select: { id: true },
+    });
+
+    return createdProfile.id;
+  }
+
+  private async resolveDriverProfileId(driverIdOrUserId: string) {
+    const byProfileId = await this.prisma.driverProfile.findUnique({
+      where: { id: driverIdOrUserId },
+      select: { id: true },
+    });
+    if (byProfileId) {
+      return byProfileId.id;
+    }
+
+    const byUserId = await this.prisma.driverProfile.findUnique({
+      where: { userId: driverIdOrUserId },
+      select: { id: true },
+    });
+    if (byUserId) {
+      return byUserId.id;
+    }
+
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id: driverIdOrUserId },
+      select: { id: true, role: true },
+    });
+
+    if (!existingUser) {
+      await this.prisma.user.create({
+        data: {
+          id: driverIdOrUserId,
+          role: 'DRIVER',
+          phone: `proto-driver-${driverIdOrUserId}`,
+        },
+      });
+    } else if (existingUser.role !== 'DRIVER') {
+      await this.prisma.user.update({
+        where: { id: driverIdOrUserId },
+        data: { role: 'DRIVER' },
+      });
+    }
+
+    const createdProfile = await this.prisma.driverProfile.upsert({
+      where: { userId: driverIdOrUserId },
+      update: {},
+      create: {
+        userId: driverIdOrUserId,
+        name: 'Prototype Driver',
+        licenseNumber: `SIM-${driverIdOrUserId.slice(0, 10)}`,
+      },
+      select: { id: true },
+    });
+
+    return createdProfile.id;
+  }
+
   async handleTripCompletion(tripId: string) {
     // Wrap in transaction to ensure both fee and invoice are created safely
     return this.prisma.$transaction(async (prisma) => {
@@ -64,16 +166,29 @@ export class BillingService {
   }
 
   async getInvoicesForShipper(shipperId: string) {
+    const shipperProfileId = await this.resolveShipperProfileId(shipperId);
+    if (!shipperProfileId) {
+      return [];
+    }
+
     return this.prisma.invoice.findMany({
-      where: { shipperId },
+      where: { shipperId: shipperProfileId },
       orderBy: { createdAt: 'desc' },
     });
   }
 
   async getEarningsForDriver(driverId: string) {
+    const driverProfileId = await this.resolveDriverProfileId(driverId);
+    if (!driverProfileId) {
+      return {
+        total: 0,
+        history: [],
+      };
+    }
+
     const trips = await this.prisma.trip.findMany({
       where: {
-        driverId: driverId,
+        driverId: driverProfileId,
         status: 'DELIVERED',
       },
       include: {

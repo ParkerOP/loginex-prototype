@@ -1,4 +1,4 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
 import { AdminService } from './admin.service';
 
 @Controller('admin')
@@ -15,6 +15,11 @@ export class AdminController {
     return this.adminService.getAllLoads();
   }
 
+  @Get('investor-metrics')
+  getInvestorMetrics() {
+    return this.adminService.getInvestorMetrics();
+  }
+
   @Get('users')
   getAllUsers() {
     return this.adminService.getAllUsers();
@@ -23,5 +28,10 @@ export class AdminController {
   @Post('simulate')
   simulateLoadLifecycle() {
     return this.adminService.simulateLoadLifecycle();
+  }
+
+  @Post('simulate-batch/:count')
+  simulateLoadLifecycleBatch(@Param('count', ParseIntPipe) count: number) {
+    return this.adminService.simulateBatch(count);
   }
 }

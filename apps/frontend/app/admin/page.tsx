@@ -1,52 +1,116 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { BackgroundGradient } from "@/components/ui/magic/BackgroundGradient";
 import {
   Activity,
-  Users,
-  Truck,
-  Package,
+  AlertTriangle,
+  CheckCircle2,
+  Coins,
+  Gauge,
   Play,
   ShieldAlert,
-  CheckCircle2,
+  Sparkles,
+  Truck,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  LineChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
   Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
+  Cell,
 } from "recharts";
+import {
+  AdminLoadRow,
+  AdminStats,
+  InvestorMetrics,
+  getAdminInvestorMetrics,
+  getAdminLoads,
+  getAdminStats,
+  runAdminBatchSimulation,
+  runAdminSimulation,
+} from "@/lib/api/admin";
+import { useSession } from "next-auth/react";
+
+const defaultStats: AdminStats = {
+  totalUsers: 0,
+  totalShippers: 0,
+  totalDrivers: 0,
+  totalLoads: 0,
+  activeLoads: 0,
+  totalTrips: 0,
+  activeTrips: 0,
+  completedTrips: 0,
+};
+
+const defaultInvestorMetrics: InvestorMetrics = {
+  funnel: {
+    posted: 0,
+    matched: 0,
+    booked: 0,
+    started: 0,
+    delivered: 0,
+    deliveredConversionPct: 0,
+  },
+  revenue: {
+    invoiceCount: 0,
+    invoiceTotal: 0,
+    platformFeePending: 0,
+    platformFeeCollected: 0,
+  },
+  trustAndRisk: {
+    avgDriverTrustScore: 0,
+    openDisputes: 0,
+    resolvedDisputes: 0,
+    podCount: 0,
+    podCoveragePct: 0,
+  },
+  breakdown: {
+    loadStatus: {},
+    tripStatus: {},
+  },
+};
+
+const statusPalette = ["#2563eb", "#16a34a", "#ea580c", "#9333ea", "#dc2626", "#0ea5e9"];
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<any>(null);
-  const [loads, setLoads] = useState<any[]>([]);
+  const { data: session } = useSession();
+  const [stats, setStats] = useState<AdminStats>(defaultStats);
+  const [investorMetrics, setInvestorMetrics] =
+    useState<InvestorMetrics>(defaultInvestorMetrics);
+  const [loads, setLoads] = useState<AdminLoadRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [simulating, setSimulating] = useState(false);
 
   const fetchDashboardData = async () => {
     try {
-      const statsRes = await fetch("http://localhost:3000/admin/stats");
-      const statsData = await statsRes.json();
-      setStats(statsData);
-
-      const loadsRes = await fetch("http://localhost:3000/admin/loads");
-      const loadsData = await loadsRes.json();
-      setLoads(loadsData);
+      const [statsData, loadsData, metricsData] = await Promise.all([
+        getAdminStats(session),
+        getAdminLoads(session),
+        getAdminInvestorMetrics(session),
+      ]);
+      setStats(statsData || defaultStats);
+      setLoads(loadsData || []);
+      setInvestorMetrics(metricsData || defaultInvestorMetrics);
     } catch (error) {
       console.error("Failed to fetch admin data", error);
       toast.error("Failed to connect to backend APIs");
@@ -57,43 +121,79 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
-    const interval = setInterval(fetchDashboardData, 5000); // Live refresh every 5s
+    const interval = setInterval(fetchDashboardData, 5000);
     return () => clearInterval(interval);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
 
-  const handleSimulate = async () => {
+  const runSingleSimulation = async () => {
     setSimulating(true);
-    toast("Starting simulation...", {
-      description: "Generating mock users and load lifecycle",
-    });
+    toast("Running lifecycle simulation...");
     try {
-      const res = await fetch("http://localhost:3000/admin/simulate", {
-        method: "POST",
-      });
-      const result = await res.json();
-      if (result.success) {
-        toast.success("Simulation Complete", {
-          description: `Load ${result.data.loadId.substring(0, 8)} processed successfully. Fraud flags triggered in backend logs.`,
+      const result = await runAdminSimulation(session);
+      if (result?.success) {
+        toast.success("Simulation complete", {
+          description: `Load ${result.data.loadId.slice(0, 8)} | Trip ${result.data.tripId.slice(0, 8)}`,
         });
-        await fetchDashboardData();
-      } else {
-        toast.error("Simulation failed");
       }
-    } catch (error) {
-      toast.error("Error during simulation");
+      await fetchDashboardData();
+    } catch {
+      toast.error("Simulation failed");
     } finally {
       setSimulating(false);
     }
   };
 
-  const chartData = [
-    { name: "00:00", trips: Math.floor(Math.random() * 10) },
-    { name: "04:00", trips: Math.floor(Math.random() * 20) },
-    { name: "08:00", trips: Math.floor(Math.random() * 50) },
-    { name: "12:00", trips: Math.floor(Math.random() * 80) },
-    { name: "16:00", trips: Math.floor(Math.random() * 60) },
-    { name: "20:00", trips: Math.floor(Math.random() * 30) },
-  ];
+  const runBatchSimulation = async (count: number) => {
+    setSimulating(true);
+    toast(`Seeding ${count} lifecycle runs...`);
+    try {
+      const result = await runAdminBatchSimulation(count, session);
+      if (result?.success) {
+        const fraudCount = result.data.filter((item) => item.fraudMode).length;
+        const disputeCount = result.data.filter((item) => item.disputeId).length;
+        toast.success("Batch simulation complete", {
+          description: `${result.data.length} runs | fraud cases: ${fraudCount} | disputes: ${disputeCount}`,
+        });
+      }
+      await fetchDashboardData();
+    } catch {
+      toast.error("Batch simulation failed");
+    } finally {
+      setSimulating(false);
+    }
+  };
+
+  const activityChartData = useMemo(
+    () => [
+      { name: "Users", value: stats.totalUsers },
+      { name: "Loads", value: stats.totalLoads },
+      { name: "Trips", value: stats.totalTrips },
+      { name: "Active", value: stats.activeTrips },
+      { name: "Done", value: stats.completedTrips },
+    ],
+    [stats],
+  );
+
+  const funnelChartData = useMemo(
+    () => [
+      { stage: "Posted", value: investorMetrics.funnel.posted },
+      { stage: "Matched", value: investorMetrics.funnel.matched },
+      { stage: "Booked", value: investorMetrics.funnel.booked },
+      { stage: "Started", value: investorMetrics.funnel.started },
+      { stage: "Delivered", value: investorMetrics.funnel.delivered },
+    ],
+    [investorMetrics],
+  );
+
+  const tripStatusPieData = useMemo(
+    () =>
+      Object.entries(investorMetrics.breakdown.tripStatus).map(([name, value]) => ({
+        name,
+        value,
+      })),
+    [investorMetrics],
+  );
 
   if (loading) {
     return (
@@ -110,53 +210,58 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           <div>
             <h1 className="text-4xl font-black tracking-tight text-gray-900 flex items-center gap-3">
               <ShieldAlert className="h-8 w-8 text-blue-600" />
-              LogineX Admin Center
+              LogineX Control Room
             </h1>
             <p className="text-gray-500 mt-2">
-              Investor Prototype Control Panel & Observability
+              Real-time marketplace simulation.
             </p>
           </div>
-          <Button
-            size="lg"
-            onClick={handleSimulate}
-            disabled={simulating}
-            className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg transition-all"
-          >
-            {simulating ? (
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 1 }}
-                className="h-5 w-5 border-2 border-white border-t-transparent rounded-full mr-2"
-              />
-            ) : (
-              <Play className="h-5 w-5 mr-2" />
-            )}
-            {simulating ? "Simulating Lifecycle..." : "Run E2E Simulation"}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              onClick={runSingleSimulation}
+              disabled={simulating}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Play className="h-4 w-4 mr-2" />
+              Run 1x
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => runBatchSimulation(5)}
+              disabled={simulating}
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Seed 5x
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => runBatchSimulation(15)}
+              disabled={simulating}
+            >
+              <Gauge className="h-4 w-4 mr-2" />
+              Seed 15x
+            </Button>
+          </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           <BackgroundGradient className="rounded-[22px] bg-white p-1">
             <Card className="border-0 shadow-none bg-transparent">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">
-                  Total Users
-                </CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-500">Users</CardTitle>
                 <Users className="h-4 w-4 text-gray-400" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">
-                  {stats?.totalUsers || 0}
-                </div>
+                <div className="text-3xl font-bold">{stats.totalUsers}</div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Shippers: {stats?.totalShippers} | Drivers:{" "}
-                  {stats?.totalDrivers}
+                  Shippers {stats.totalShippers} | Drivers {stats.totalDrivers}
                 </p>
               </CardContent>
             </Card>
@@ -165,35 +270,16 @@ export default function AdminDashboard() {
           <BackgroundGradient className="rounded-[22px] bg-white p-1">
             <Card className="border-0 shadow-none bg-transparent">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">
-                  Total Loads
-                </CardTitle>
-                <Package className="h-4 w-4 text-blue-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">
-                  {stats?.totalLoads || 0}
-                </div>
-                <p className="text-xs text-blue-500 mt-1">
-                  {stats?.activeLoads || 0} currently active
-                </p>
-              </CardContent>
-            </Card>
-          </BackgroundGradient>
-
-          <BackgroundGradient className="rounded-[22px] bg-white p-1">
-            <Card className="border-0 shadow-none bg-transparent">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">
-                  Active Trips
-                </CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-500">Trip Conversion</CardTitle>
                 <Truck className="h-4 w-4 text-orange-500" />
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {stats?.activeTrips || 0}
+                  {investorMetrics.funnel.deliveredConversionPct}%
                 </div>
-                <p className="text-xs text-orange-500 mt-1">In transit</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Delivered {investorMetrics.funnel.delivered} / Posted {investorMetrics.funnel.posted}
+                </p>
               </CardContent>
             </Card>
           </BackgroundGradient>
@@ -201,49 +287,53 @@ export default function AdminDashboard() {
           <BackgroundGradient className="rounded-[22px] bg-white p-1">
             <Card className="border-0 shadow-none bg-transparent">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">
-                  Completed
-                </CardTitle>
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <CardTitle className="text-sm font-medium text-gray-500">Invoice Revenue</CardTitle>
+                <Coins className="h-4 w-4 text-emerald-500" />
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {stats?.completedTrips || 0}
+                  INR {investorMetrics.revenue.invoiceTotal.toFixed(0)}
                 </div>
-                <p className="text-xs text-green-500 mt-1">
-                  Successful deliveries
+                <p className="text-xs text-gray-500 mt-1">
+                  {investorMetrics.revenue.invoiceCount} invoices issued
+                </p>
+              </CardContent>
+            </Card>
+          </BackgroundGradient>
+
+          <BackgroundGradient className="rounded-[22px] bg-white p-1">
+            <Card className="border-0 shadow-none bg-transparent">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">Risk Panel</CardTitle>
+                <AlertTriangle className="h-4 w-4 text-red-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{investorMetrics.trustAndRisk.openDisputes}</div>
+                <p className="text-xs text-gray-500 mt-1">
+                  POD coverage {investorMetrics.trustAndRisk.podCoveragePct}%
                 </p>
               </CardContent>
             </Card>
           </BackgroundGradient>
         </div>
 
-        {/* Chart and Activity Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <Card className="col-span-2 shadow-sm">
             <CardHeader>
-              <CardTitle>System Activity (Simulated Volume)</CardTitle>
-              <CardDescription>
-                Mock real-time trip completion rates
-              </CardDescription>
+              <CardTitle>Core Activity Pulse</CardTitle>
+              <CardDescription>System volume and throughput signals</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px] w-full">
+              <div className="h-[280px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
+                  <LineChart data={activityChartData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} />
                     <YAxis axisLine={false} tickLine={false} />
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: "8px",
-                        border: "none",
-                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                      }}
-                    />
+                    <Tooltip />
                     <Line
                       type="monotone"
-                      dataKey="trips"
+                      dataKey="value"
                       stroke="#2563eb"
                       strokeWidth={3}
                       dot={{ r: 4 }}
@@ -255,59 +345,84 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle>Trip Status Mix</CardTitle>
+              <CardDescription>Live lifecycle distribution</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={tripStatusPieData}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={55}
+                      outerRadius={92}
+                    >
+                      {tripStatusPieData.map((entry, index) => (
+                        <Cell key={entry.name} fill={statusPalette[index % statusPalette.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <Card className="col-span-2 shadow-sm">
+            <CardHeader>
+              <CardTitle>Funnel Health</CardTitle>
+              <CardDescription>Posted to delivered conversion funnel</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={funnelChartData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="stage" axisLine={false} tickLine={false} />
+                    <YAxis axisLine={false} tickLine={false} />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="#2563eb" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="shadow-sm overflow-hidden flex flex-col">
             <CardHeader className="bg-gray-50 border-b">
               <CardTitle className="flex items-center gap-2">
                 <Activity className="h-5 w-5 text-blue-600" />
-                Live System Logs
+                Live Logs
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0 flex-1 overflow-auto bg-gray-900 text-green-400 font-mono text-xs">
               <div className="p-4 space-y-2">
-                <div className="text-gray-500">
-                  // Real-time observability stream
-                </div>
-                {loads.slice(0, 5).map((load, i) => (
-                  <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    key={load.id}
-                  >
-                    [{new Date(load.createdAt).toLocaleTimeString()}] LOAD_
-                    {load.id.substring(0, 6)}: Status changed to {load.status}
-                  </motion.div>
+                {loads.slice(0, 10).map((load) => (
+                  <div key={load.id}>
+                    [{new Date(load.createdAt).toLocaleTimeString()}] LOAD_{load.id.slice(0, 6)}{" "}
+                    {load.originCity} to {load.destinationCity} status={load.status}
+                  </div>
                 ))}
-                {simulating && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-yellow-400"
-                  >
-                    &gt; Running automated lifecycle simulation...
-                  </motion.div>
-                )}
-                {simulating && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1 }}
-                    className="text-red-400"
-                  >
-                    [WARN] FRAUD ALERT: Unrealistic speed detected for simulated
-                    trip.
-                  </motion.div>
+                {loads.length === 0 && (
+                  <div className="text-gray-400">
+                    No load events yet. Use simulation buttons to generate investor demo data.
+                  </div>
                 )}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Master Data Table */}
         <Card className="shadow-sm">
           <CardHeader>
             <CardTitle>Recent Loads & Trips</CardTitle>
-            <CardDescription>Live view of all system loads</CardDescription>
+            <CardDescription>Live operational table with lifecycle status</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -322,58 +437,25 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  <AnimatePresence>
-                    {loads.map((load: any) => (
-                      <motion.tr
-                        key={load.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
-                        className="bg-white border-b hover:bg-gray-50"
-                      >
-                        <td className="px-6 py-4 font-mono text-xs">
-                          {load.id.substring(0, 8)}
-                        </td>
-                        <td className="px-6 py-4 font-medium">
-                          {load.originCity} → {load.destinationCity}
-                        </td>
-                        <td className="px-6 py-4">
-                          <Badge
-                            variant={
-                              load.status === "DELIVERED"
-                                ? "default"
-                                : load.status === "IN_TRANSIT"
-                                  ? "secondary"
-                                  : "outline"
-                            }
-                            className={
-                              load.status === "DELIVERED"
-                                ? "bg-green-100 text-green-800 border-green-200"
-                                : load.status === "IN_TRANSIT"
-                                  ? "bg-blue-100 text-blue-800 border-blue-200"
-                                  : ""
-                            }
-                          >
-                            {load.status}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4">
-                          {load.shipper?.name || "Unknown"}
-                        </td>
-                        <td className="px-6 py-4 text-gray-500">
-                          {new Date(load.createdAt).toLocaleDateString()}
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </AnimatePresence>
+                  {loads.map((load) => (
+                    <tr key={load.id} className="bg-white border-b hover:bg-gray-50">
+                      <td className="px-6 py-4 font-mono text-xs">{load.id.slice(0, 8)}</td>
+                      <td className="px-6 py-4 font-medium">
+                        {load.originCity} to {load.destinationCity}
+                      </td>
+                      <td className="px-6 py-4">
+                        <Badge variant="outline">{load.status}</Badge>
+                      </td>
+                      <td className="px-6 py-4">{load.shipper?.name || "Unknown"}</td>
+                      <td className="px-6 py-4 text-gray-500">
+                        {new Date(load.createdAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
                   {loads.length === 0 && (
                     <tr>
-                      <td
-                        colSpan={5}
-                        className="px-6 py-8 text-center text-gray-500"
-                      >
-                        No loads available. Click 'Run E2E Simulation' to
-                        generate data.
+                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                        No loads available. Use simulation to seed activity.
                       </td>
                     </tr>
                   )}
@@ -382,6 +464,34 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Avg Driver Trust</CardTitle>
+            </CardHeader>
+            <CardContent className="text-2xl font-bold">
+              {investorMetrics.trustAndRisk.avgDriverTrustScore.toFixed(2)}
+            </CardContent>
+          </Card>
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Platform Fee Pending</CardTitle>
+            </CardHeader>
+            <CardContent className="text-2xl font-bold">
+              INR {investorMetrics.revenue.platformFeePending.toFixed(2)}
+            </CardContent>
+          </Card>
+          <Card className="shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Resolved Disputes</CardTitle>
+            </CardHeader>
+            <CardContent className="text-2xl font-bold flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              {investorMetrics.trustAndRisk.resolvedDisputes}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

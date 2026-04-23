@@ -10,7 +10,7 @@ import {
 import { UserService } from './user.service';
 import { CreateDeviceTokenDto } from './dto/create-device-token.dto';
 
-@Controller('v1/users')
+@Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 

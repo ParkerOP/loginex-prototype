@@ -84,10 +84,15 @@ export default function SplashScreen({
 
               {/* squishable letter i */}
               <motion.span
-                className="inline-block mx-1"
+                className="inline-block"
+                initial={{ marginLeft: 14, marginRight: 14 }}
                 animate={{
                   scaleY: [1, 1, 0.3, 0.3, 1],
                   y: [0, 0, 20, 20, 0],
+                  // Keep extra breathing room around "i" during squish phase,
+                  // then collapse to normal spacing for final "LogineX" word shape.
+                  marginLeft: [14, 14, 11, 11, 3],
+                  marginRight: [14, 14, 20, 20, 3],
                 }}
                 transition={{
                   duration: 3,
@@ -129,7 +134,7 @@ export default function SplashScreen({
                   rotate: 180,
                 }}
                 animate={{
-                  x: [300, 105, 105, 105, 230], // Start far right, land on 'i' (around 105px offset), stay, hop to end
+                  x: [300, 96, 96, 96, 230], // land centered on "i" without clipping into "n"
                   y: [-200, -80, 5, 5, 0], // Fall down, bounce on 'i', stay squished, land at end
                   opacity: [0, 1, 1, 1, 0], // Fade out when the real text 'X' appears
                   scale: [0.5, 0.8, 0.8, 0.8, 0.5],

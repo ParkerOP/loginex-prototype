@@ -112,23 +112,32 @@ export default function NewLoadPage() {
   };
 
   const handleSubmit = async () => {
+    if (!session?.user?.id) {
+      alert("Please sign in as a shipper before posting a load.");
+      return;
+    }
+
     try {
       setLoading(true);
       await createLoad({
-        shipperId: session?.user?.id || "dummy-shipper-123",
+        shipperId: session.user.id,
         originAddress: formData.pickup,
         originCity: formData.pickup.split(",")[0] || "Unknown",
         destinationAddress: formData.dropoff,
         destinationCity: formData.dropoff.split(",")[0] || "Unknown",
         cargoDescription: formData.cargo,
         requiredVehicleType: formData.vehicleType,
-        weight: formData.weight ? parseInt(formData.weight) : undefined,
+        weight: formData.weight ? Number(formData.weight) : undefined,
         scheduledTime: new Date().toISOString(), // Mock immediate schedule
-      });
+      }, session);
       router.push("/");
     } catch (error) {
       console.error("Failed to post load:", error);
-      alert("Failed to post load. Check console for details.");
+      alert(
+        error instanceof Error
+          ? `Failed to post load: ${error.message}`
+          : "Failed to post load. Check console for details.",
+      );
     } finally {
       setLoading(false);
     }

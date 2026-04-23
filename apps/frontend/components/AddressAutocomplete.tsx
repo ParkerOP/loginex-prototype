@@ -28,6 +28,7 @@ export default function AddressAutocomplete({
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -39,7 +40,12 @@ export default function AddressAutocomplete({
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
   }, []);
 
   const searchAddress = async (query: string) => {
@@ -50,13 +56,15 @@ export default function AddressAutocomplete({
 
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=in`,
+        `/api/osm/search?q=${encodeURIComponent(query)}&limit=5`,
       );
-      const data = await response.json();
-      setSuggestions(data);
+      const payload = await response.json();
+      setSuggestions(payload?.suggestions || []);
       setIsOpen(true);
     } catch (error) {
-      console.error("Geocoding error:", error);
+      setSuggestions([]);
+      setIsOpen(false);
+      console.error("Address lookup failed:", error);
     }
   };
 
@@ -64,12 +72,12 @@ export default function AddressAutocomplete({
     const newValue = e.target.value;
     onChange(newValue);
 
-    // Debounce search
-    const timeoutId = setTimeout(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    debounceRef.current = setTimeout(() => {
       searchAddress(newValue);
     }, 500);
-
-    return () => clearTimeout(timeoutId);
   };
 
   const handleSelect = (suggestion: Suggestion) => {

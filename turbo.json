@@ -1,6 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalEnv": ["NEXTAUTH_SECRET"],
+  "globalEnv": ["NEXTAUTH_SECRET", "BACKEND_INTERNAL_URL", "NEXT_PUBLIC_API_URL"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

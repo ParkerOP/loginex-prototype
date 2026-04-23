@@ -1,4 +1,10 @@
 import { fetchApi } from "./client";
+interface SessionLike {
+  user?: {
+    id?: string;
+    role?: string;
+  };
+}
 
 export interface Load {
   id: string;
@@ -16,18 +22,22 @@ export interface Load {
   createdAt: string;
 }
 
-export async function createLoad(data: Partial<Load>) {
+export async function createLoad(data: Partial<Load>, session?: SessionLike | null) {
   return fetchApi("/loads", {
     method: "POST",
     body: JSON.stringify(data),
+    session,
   });
 }
 
-export async function getLoadsForShipper(shipperId: string): Promise<Load[]> {
-  return fetchApi(`/loads/shipper/${shipperId}`);
+export async function getLoadsForShipper(
+  shipperId: string,
+  session?: SessionLike | null,
+): Promise<Load[]> {
+  return fetchApi(`/loads/shipper/${shipperId}`, { session });
 }
 
 
-export async function getAvailableLoads(): Promise<Load[]> {
-  return fetchApi('/loads/available');
+export async function getAvailableLoads(session?: SessionLike | null): Promise<Load[]> {
+  return fetchApi('/loads/available', { session });
 }

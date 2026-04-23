@@ -24,6 +24,7 @@ import {
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { getLoadsForShipper, getAvailableLoads, Load } from "../lib/api/loads";
+import { getTripsByDriver, Trip } from "../lib/api/trips";
 import { motion, AnimatePresence } from "framer-motion";
 import { BackgroundGradient } from "@/components/ui/magic/BackgroundGradient";
 import { usePerformance } from "@/components/providers/performance-context";
@@ -51,6 +52,7 @@ export default function Home() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [loads, setLoads] = useState<Load[]>([]);
+  const [driverTrips, setDriverTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const { reduceMotion, isLowEnd } = usePerformance();
 
@@ -63,18 +65,22 @@ export default function Home() {
   useEffect(() => {
     if (session?.user?.id && (session?.user as any)?.role) {
       if ((session.user as any).role === "SHIPPER") {
-        getLoadsForShipper(session.user.id)
+        getLoadsForShipper(session.user.id, session)
           .then((data) => {
             setLoads(data || []);
           })
           .catch((err) => console.error("Failed to fetch shipper loads", err))
           .finally(() => setLoading(false));
       } else if ((session.user as any).role === "DRIVER") {
-        getAvailableLoads()
-          .then((data) => {
-            setLoads(data || []);
+        Promise.all([
+          getAvailableLoads(session),
+          getTripsByDriver(session.user.id, session),
+        ])
+          .then(([availableLoads, trips]) => {
+            setLoads(availableLoads || []);
+            setDriverTrips(trips || []);
           })
-          .catch((err) => console.error("Failed to fetch available loads", err))
+          .catch((err) => console.error("Failed to fetch driver dashboard data", err))
           .finally(() => setLoading(false));
       }
     }
@@ -97,6 +103,8 @@ export default function Home() {
   ).length;
   const inTransitLoads = loads.filter((l) => l.status === "IN_TRANSIT").length;
   const completedLoads = loads.filter((l) => l.status === "DELIVERED").length;
+  const activeDriverTrips = driverTrips.filter((trip) => trip.status !== "DELIVERED").length;
+  const completedDriverTrips = driverTrips.filter((trip) => trip.status === "DELIVERED").length;
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -172,7 +180,7 @@ export default function Home() {
           },
           {
             title: "Active Trips",
-            value: 0, // Mock for now
+            value: activeDriverTrips,
             icon: Truck,
             desc: "Currently driving",
             color: "text-amber-500",
@@ -180,7 +188,7 @@ export default function Home() {
           },
           {
             title: "Completed Trips",
-            value: 0, // Mock for now
+            value: completedDriverTrips,
             icon: Activity,
             desc: "Total delivered",
             color: "text-green-500",
