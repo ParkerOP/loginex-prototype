@@ -1,3 +1,4 @@
+import '../../shared/presentation/app_drawer.dart';
 import "trip_execution_screen.dart";
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +13,7 @@ class DriverDashboard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('Find Loads').animate().fadeIn().slideX(),
         backgroundColor: Colors.transparent,

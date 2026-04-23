@@ -1,3 +1,4 @@
+import '../../shared/presentation/app_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -13,6 +14,7 @@ class ShipperDashboard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('My Active Loads').animate().fadeIn().slideX(),
         backgroundColor: Colors.transparent,

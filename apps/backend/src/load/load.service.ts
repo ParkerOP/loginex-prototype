@@ -57,4 +57,13 @@ export class LoadService {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  async getLoadById(id: string) {
+    return this.prisma.load.findUnique({
+      where: { id },
+      include: {
+        shipper: true,
+      },
+    });
+  }
 }

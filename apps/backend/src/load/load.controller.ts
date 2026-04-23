@@ -1,9 +1,4 @@
-import { Controller, Post, Body, Get, Param
-  @Get('available')
-  async getAvailableLoads(): Promise<any> {
-    return this.loadService.getAvailableLoads();
-  }
-} from '@nestjs/common';
+import { Controller, Post, Body, Get, Param } from '@nestjs/common';
 import { LoadService } from './load.service';
 import { CreateLoadDto } from './dto/create-load.dto';
 
@@ -11,15 +6,23 @@ import { CreateLoadDto } from './dto/create-load.dto';
 export class LoadController {
   constructor(private readonly loadService: LoadService) {}
 
+  @Get('available')
+  async getAvailableLoads() {
+    return this.loadService.getAvailableLoads();
+  }
+
   @Post()
-  async createLoad(@Body() createLoadDto: CreateLoadDto): Promise<any> {
+  async createLoad(@Body() createLoadDto: CreateLoadDto) {
     return this.loadService.createLoad(createLoadDto);
   }
 
   @Get('shipper/:shipperId')
-  async getLoadsForShipper(
-    @Param('shipperId') shipperId: string,
-  ): Promise<any> {
+  async getLoadsForShipper(@Param('shipperId') shipperId: string) {
     return this.loadService.getLoadsForShipper(shipperId);
+  }
+
+  @Get(':id')
+  async getLoadById(@Param('id') id: string) {
+    return this.loadService.getLoadById(id);
   }
 }
