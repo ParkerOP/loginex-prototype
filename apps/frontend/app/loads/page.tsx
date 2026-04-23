@@ -6,25 +6,25 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-export default function MyTripsPage() {
+export default function MyLoadsPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
-          My Trips
+          My Loads
         </h1>
         <p className="text-muted-foreground mt-1 text-lg">
-          View your active and past trips.
+          View and manage all your posted loads.
         </p>
       </div>
       <Card className="glass-card">
         <CardHeader>
-          <CardTitle>Trip History</CardTitle>
-          <CardDescription>Track your deliveries.</CardDescription>
+          <CardTitle>All Loads</CardTitle>
+          <CardDescription>History of your logistics.</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Trip list rendering goes here.
+            Load list rendering goes here.
           </p>
         </CardContent>
       </Card>

@@ -30,12 +30,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen selection:bg-primary/30`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen selection:bg-primary/30`}
+      >
         <SessionProvider>
           <PerformanceProvider>
-            <SplashProvider>
-              {children}
-            </SplashProvider>
+            <SplashProvider>{children}</SplashProvider>
           </PerformanceProvider>
         </SessionProvider>
         <Toaster />

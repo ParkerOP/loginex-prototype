@@ -18,14 +18,23 @@ interface Suggestion {
   lon: string;
 }
 
-export default function AddressAutocomplete({ id, placeholder, value, onChange, onBlur }: AddressAutocompleteProps) {
+export default function AddressAutocomplete({
+  id,
+  placeholder,
+  value,
+  onChange,
+  onBlur,
+}: AddressAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -41,7 +50,7 @@ export default function AddressAutocomplete({ id, placeholder, value, onChange, 
 
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=in`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=in`,
       );
       const data = await response.json();
       setSuggestions(data);
@@ -67,8 +76,8 @@ export default function AddressAutocomplete({ id, placeholder, value, onChange, 
     onChange(suggestion.display_name);
     setIsOpen(false);
     if (onBlur) {
-        // give it a tiny bit to update state before triggering blur calculation
-        setTimeout(() => onBlur(), 100);
+      // give it a tiny bit to update state before triggering blur calculation
+      setTimeout(() => onBlur(), 100);
     }
   };
 
@@ -82,10 +91,10 @@ export default function AddressAutocomplete({ id, placeholder, value, onChange, 
         value={value}
         onChange={handleInputChange}
         onBlur={() => {
-            // Delay blur to allow clicking on suggestion
-            setTimeout(() => {
-                if (onBlur) onBlur();
-            }, 200)
+          // Delay blur to allow clicking on suggestion
+          setTimeout(() => {
+            if (onBlur) onBlur();
+          }, 200);
         }}
         autoComplete="off"
       />

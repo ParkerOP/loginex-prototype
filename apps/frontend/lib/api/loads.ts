@@ -1,4 +1,4 @@
-import { fetchApi } from './client';
+import { fetchApi } from "./client";
 
 export interface Load {
   id: string;
@@ -17,8 +17,8 @@ export interface Load {
 }
 
 export async function createLoad(data: Partial<Load>) {
-  return fetchApi('/loads', {
-    method: 'POST',
+  return fetchApi("/loads", {
+    method: "POST",
     body: JSON.stringify(data),
   });
 }
