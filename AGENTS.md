@@ -632,3 +632,12 @@ Based on an evaluation of the codebase, **the backend is ready for the mobile fr
 - Before adding a new feature, consider the visual transition from the previous state.
 - Ensure all animations (Framer, Anime.js, Flutter) are optimized and do not block the main UI thread.
 - Test the adaptive mobile UI under simulated 2G/3G network conditions to verify the graceful degradation logic.
+
+## TODO
+* Continue building out full-stack functionality for the remaining dashboard pages based on the user's role (Shipper vs. Driver).
+* Specifically, the following pages need implementation:
+    * `/billing` (Shipper billing and invoices)
+    * `/earnings` (Driver payouts and earnings history)
+    * `/my-trips` (Driver active and completed trips)
+    * `/profile` (Driver/Shipper profile editing)
+    * `/drivers` (Shipper view of active drivers)

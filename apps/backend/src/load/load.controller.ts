@@ -1,4 +1,9 @@
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param
+  @Get('available')
+  async getAvailableLoads(): Promise<any> {
+    return this.loadService.getAvailableLoads();
+  }
+} from '@nestjs/common';
 import { LoadService } from './load.service';
 import { CreateLoadDto } from './dto/create-load.dto';
 

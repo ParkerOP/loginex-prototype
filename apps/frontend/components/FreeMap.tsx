@@ -1,6 +1,7 @@
+
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -36,7 +37,7 @@ const RoutingMachine = ({
     const geocode = async (address: string) => {
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`,
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`
         );
         const data = await response.json();
         if (data && data.length > 0) {
@@ -92,10 +93,26 @@ const RoutingMachine = ({
 export default function FreeMap({ pickup, dropoff }: FreeMapProps) {
   const defaultCenter: L.LatLngExpression = [28.6139, 77.209]; // New Delhi
   const mapRef = useRef<L.Map | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, []);
+
+  if (!mounted) {
+    return <div style={{ height: "100%", width: "100%", minHeight: "400px" }} />;
+  }
 
   return (
-    <div style={{ height: "100%", width: "100%", minHeight: "400px" }}>
+    <div style={{ height: "100%", width: "100%", minHeight: "400px" }} id="map-container-wrapper">
       <MapContainer
+        key="leaflet-map-instance"
         ref={mapRef}
         center={defaultCenter}
         zoom={10}

@@ -1,15 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SplashScreen from "../ui/SplashScreen";
 
 export function SplashProvider({ children }: { children: React.ReactNode }) {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(false);
+  const [hasChecked, setHasChecked] = useState(false);
+
+
+  useEffect(() => {
+    const hasPlayed = sessionStorage.getItem("loginex_splash_played");
+    if (!hasPlayed) {
+      setShowSplash(true);
+    }
+    setHasChecked(true);
+  }, []);
+
+  const handleComplete = () => {
+    sessionStorage.setItem("loginex_splash_played", "true");
+    setShowSplash(false);
+  };
+
 
   // Avoid hydration mismatch by rendering immediately but relying on the component state
   return (
     <>
-      <SplashScreen onComplete={() => setShowSplash(false)} />
+      {hasChecked && showSplash && <SplashScreen onComplete={handleComplete} />}
+      {!hasChecked && <div className="fixed inset-0 z-50 bg-background" />}
       <div
         style={{
           opacity: showSplash ? 0 : 1,

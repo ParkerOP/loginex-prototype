@@ -26,3 +26,8 @@ export async function createLoad(data: Partial<Load>) {
 export async function getLoadsForShipper(shipperId: string): Promise<Load[]> {
   return fetchApi(`/loads/shipper/${shipperId}`);
 }
+
+
+export async function getAvailableLoads(): Promise<Load[]> {
+  return fetchApi('/loads/available');
+}
